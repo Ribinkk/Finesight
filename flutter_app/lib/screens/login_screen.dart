@@ -112,7 +112,7 @@ class LoginScreen extends StatelessWidget {
                               const Icon(Icons.login),
                               const SizedBox(width: 12),
                               Text(
-                                'Continue with Auth0',
+                                'Continue',
                                 style: GoogleFonts.inter(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
