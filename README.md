@@ -1,4 +1,4 @@
-# SpendWise - Expense Tracker App
+# Finesight - Expense Tracker App
 
 A full-stack expense tracking application built with Flutter and Node.js.
 
