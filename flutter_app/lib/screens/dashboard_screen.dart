@@ -390,10 +390,222 @@ class DashboardScreen extends StatelessWidget {
               ),
             ),
           ),
+
+          const SizedBox(height: 16),
+
+          // Transaction History (Combined Expenses & Payments)
+          Card(
+            color: isDark ? const Color(0xFF0F172A) : Colors.white,
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(LucideIcons.history, color: isDark ? Colors.blue.shade300 : Colors.blue),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Transaction History',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Icon(LucideIcons.clock, color: isDark ? Colors.grey : Colors.grey.shade400, size: 20),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  if (expenses.isEmpty && payments.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24.0),
+                        child: Column(
+                          children: [
+                            Icon(
+                              LucideIcons.fileText,
+                              size: 48,
+                              color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "No transaction history",
+                              style: TextStyle(
+                                color: isDark ? Colors.grey : Colors.grey.shade600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    ..._buildCombinedHistory(),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 80), // Bottom padding for FAB/Nav
         ],
       ),
     );
+  }
+
+  List<Widget> _buildCombinedHistory() {
+    // Combine expenses and payments into a single list
+    final List<Map<String, dynamic>> combinedTransactions = [];
+    
+    // Add expenses
+    for (var expense in expenses) {
+      combinedTransactions.add({
+        'type': 'expense',
+        'date': expense.date,
+        'title': expense.title,
+        'category': expense.category,
+        'amount': expense.amount,
+        'icon': _getCategoryIcon(expense.category),
+        'color': _getCategoryColor(expense.category),
+      });
+    }
+    
+    // Add payments
+    for (var payment in payments) {
+      combinedTransactions.add({
+        'type': 'payment',
+        'date': payment.date,
+        'title': payment.purpose,
+        'category': payment.status == 'success' ? 'Successful' : 'Failed',
+        'amount': payment.amount,
+        'icon': payment.status == 'success' ? LucideIcons.checkCircle : LucideIcons.xCircle,
+        'color': payment.status == 'success' ? Colors.green : Colors.red,
+      });
+    }
+    
+    // Sort by date (newest first)
+    combinedTransactions.sort((a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime));
+    
+    // Take only the last 7 transactions
+    final recentHistory = combinedTransactions.take(7).toList();
+    
+    final currencyFormatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+    
+    return recentHistory.map((transaction) {
+      final isExpense = transaction['type'] == 'expense';
+      final date = transaction['date'] as DateTime;
+      final title = transaction['title'] as String;
+      final category = transaction['category'] as String;
+      final amount = transaction['amount'] as double;
+      final icon = transaction['icon'] as IconData;
+      final color = transaction['color'] as Color;
+      
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12.0),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isDark 
+                ? (isExpense ? Colors.red.shade900.withOpacity(0.2) : Colors.green.shade900.withOpacity(0.2))
+                : (isExpense ? Colors.red.shade50 : Colors.green.shade50),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isDark
+                  ? (isExpense ? Colors.red.shade800.withOpacity(0.3) : Colors.green.shade800.withOpacity(0.3))
+                  : (isExpense ? Colors.red.shade100 : Colors.green.shade100),
+            ),
+          ),
+          child: Row(
+            children: [
+              // Icon
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(width: 12),
+              // Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.black,
+                        fontSize: 14,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isExpense 
+                                ? Colors.red.withOpacity(0.2)
+                                : Colors.green.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            isExpense ? 'Expense' : 'Payment',
+                            style: TextStyle(
+                              color: isExpense ? Colors.red : Colors.green,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          category,
+                          style: TextStyle(
+                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Amount and Date
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${isExpense ? '-' : '+'}${currencyFormatter.format(amount)}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isExpense ? Colors.red : Colors.green,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    DateFormat('MMM d, y').format(date),
+                    style: TextStyle(
+                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }).toList();
   }
 
   IconData _getCategoryIcon(String category) {
