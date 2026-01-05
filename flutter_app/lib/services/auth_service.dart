@@ -16,8 +16,8 @@ class AuthService {
       await Future.delayed(const Duration(seconds: 1));
       
       _user = UserModel(
-        name: 'Ribin K Karun',
-        email: 'ribinkkarun@gmail.com',
+        name: 'John Doe',
+        email: 'demo@example.com',
         pictureUrl: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
       );
     } catch (e) {
