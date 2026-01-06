@@ -1,101 +1,95 @@
-import 'package:auth0_flutter/auth0_flutter.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/user_model.dart';
-import '../config/auth0_config.dart';
+
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import '../models/user_model.dart';
 
 class AuthService {
-  late final Auth0? _auth0;
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
-  
-  UserModel? _user;
-  Credentials? _credentials;
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  AuthService() {
-    // Only initialize Auth0 on non-web platforms
-    if (!kIsWeb) {
-      _auth0 = Auth0(Auth0Config.domain, Auth0Config.clientId);
-      _loadStoredCredentials();
-    } else {
-      _auth0 = null;
-    }
+  // Get current user
+  UserModel? get currentUser {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) return null;
+    return UserModel(
+      name: user.displayName ?? 'User',
+      email: user.email ?? '',
+      pictureUrl: user.photoURL,
+    );
   }
 
-  UserModel? get currentUser => _user;
-  bool get isLoggedIn => _user != null;
-
-  // Load stored credentials on app start (mobile only)
-  Future<void> _loadStoredCredentials() async {
-    if (kIsWeb) return;
-    
-    try {
-      final accessToken = await _secureStorage.read(key: 'access_token');
-      final idToken = await _secureStorage.read(key: 'id_token');
-      final refreshToken = await _secureStorage.read(key: 'refresh_token');
-      
-      if (accessToken != null && idToken != null && _auth0 != null) {
-        // Create credentials from stored tokens
-        _credentials = Credentials(
-          accessToken: accessToken,
-          idToken: idToken,
-          refreshToken: refreshToken,
-        );
-        
-        // Get user info
-        final userProfile = await _auth0!.api.userProfile(accessToken: accessToken);
-        
-        _user = UserModel(
-          name: userProfile.name ?? 'User',
-          email: userProfile.email ?? '',
-          pictureUrl: userProfile.pictureUrl,
-        );
-      }
-    } catch (e) {
-      print('Error loading stored credentials: $e');
-      // Clear invalid credentials
-      await _clearStoredCredentials();
-    }
+  // Stream of auth changes
+  Stream<UserModel?> get authStateChanges {
+    return _firebaseAuth.authStateChanges().map((User? user) {
+      if (user == null) return null;
+      return UserModel(
+        name: user.displayName ?? 'User',
+        email: user.email ?? '',
+        pictureUrl: user.photoURL,
+      );
+    });
   }
 
-  // Login - uses Auth0 on mobile, guest login on web
-  Future<void> login() async {
+  // Login with Google
+  Future<UserModel?> loginWithGoogle() async {
     try {
       if (kIsWeb) {
-        // Guest login for web
-        await Future.delayed(const Duration(seconds: 1));
-        _user = UserModel(
-          name: 'Guest User',
-          email: 'guest@finesight.app',
-          pictureUrl: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+        // Web specific Google Sign In
+        GoogleAuthProvider googleProvider = GoogleAuthProvider();
+
+        // Trigger the sign-in flow
+        UserCredential userCredential = await _firebaseAuth.signInWithPopup(googleProvider);
+        
+        return UserModel(
+          name: userCredential.user?.displayName ?? 'User',
+          email: userCredential.user?.email ?? '',
+          pictureUrl: userCredential.user?.photoURL,
         );
       } else {
-        // Auth0 login for mobile
-        if (_auth0 == null) throw Exception('Auth0 not initialized');
+        // Mobile Google Sign In
+        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
         
-        final credentials = await _auth0!.webAuthentication(scheme: Auth0Config.scheme).login(
-          scopes: Auth0Config.scopes,
+        if (googleUser == null) return null; // User canceled
+
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+        final OAuthCredential credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
         );
 
-        _credentials = credentials;
+        final UserCredential userCredential = await _firebaseAuth.signInWithCredential(credential);
         
-        // Store credentials securely
-        await _secureStorage.write(key: 'access_token', value: credentials.accessToken);
-        await _secureStorage.write(key: 'id_token', value: credentials.idToken);
-        if (credentials.refreshToken != null) {
-          await _secureStorage.write(key: 'refresh_token', value: credentials.refreshToken);
-        }
-
-        // Get user profile
-        final userProfile = await _auth0!.api.userProfile(accessToken: credentials.accessToken);
-        
-        _user = UserModel(
-          name: userProfile.name ?? 'User',
-          email: userProfile.email ?? '',
-          pictureUrl: userProfile.pictureUrl,
+        return UserModel(
+          name: userCredential.user?.displayName ?? 'User',
+          email: userCredential.user?.email ?? '',
+          pictureUrl: userCredential.user?.photoURL,
         );
       }
     } catch (e) {
-      print('Login error: $e');
+      print('Google Sign-In Error: $e');
+      rethrow;
+    }
+  }
+
+  // Guest Login
+  Future<UserModel> loginAsGuest() async {
+    try {
+      final userCredential = await _firebaseAuth.signInAnonymously();
+      // You might want to update the profile for anonymous user if needed, 
+      // but usually guest is just anonymous
+      return UserModel(
+          name: 'Guest',
+          email: 'guest@finesight.app',
+          pictureUrl: null,
+        );
+    } catch (e) {
+      print('Guest Login Error: $e');
       rethrow;
     }
   }
@@ -103,46 +97,12 @@ class AuthService {
   // Logout
   Future<void> logout() async {
     try {
-      if (!kIsWeb && _auth0 != null) {
-        await _auth0!.webAuthentication(scheme: Auth0Config.scheme).logout();
+      if (!kIsWeb) {
+        await _googleSignIn.signOut();
       }
-      await _clearStoredCredentials();
-      _user = null;
-      _credentials = null;
+      await _firebaseAuth.signOut();
     } catch (e) {
-      print('Logout error: $e');
-      rethrow;
-    }
-  }
-
-  // Clear stored credentials
-  Future<void> _clearStoredCredentials() async {
-    if (kIsWeb) return;
-    await _secureStorage.delete(key: 'access_token');
-    await _secureStorage.delete(key: 'id_token');
-    await _secureStorage.delete(key: 'refresh_token');
-  }
-
-  // Refresh access token (mobile only)
-  Future<void> refreshToken() async {
-    if (kIsWeb) return;
-    
-    try {
-      if (_credentials?.refreshToken == null || _auth0 == null) {
-        throw Exception('No refresh token available');
-      }
-
-      final newCredentials = await _auth0!.api.renewCredentials(
-        refreshToken: _credentials!.refreshToken!,
-      );
-
-      _credentials = newCredentials;
-      
-      // Update stored tokens
-      await _secureStorage.write(key: 'access_token', value: newCredentials.accessToken);
-      await _secureStorage.write(key: 'id_token', value: newCredentials.idToken);
-    } catch (e) {
-      print('Token refresh error: $e');
+      print('Logout Error: $e');
       rethrow;
     }
   }

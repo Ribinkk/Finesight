@@ -10,11 +10,24 @@ import 'services/auth_service.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/expenses_screen.dart';
 import 'screens/payments_screen.dart';
+import 'screens/history_screen.dart';
 import 'screens/ai_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/login_screen.dart';
 
-void main() {
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    print('Firebase initialization failed: $e');
+    // Continue anyway, maybe we are in a mode where we don't need it or it's not configured yet
+  }
   runApp(const MyApp());
 }
 
@@ -53,21 +66,31 @@ class _MyAppState extends State<MyApp> {
   Future<void> _login() async {
     setState(() => _isAuthLoading = true);
     try {
-      await _authService.login();
+      await _authService.loginWithGoogle();
       if (_authService.currentUser != null) {
         setState(() => _isLoggedIn = true);
       }
     } catch (e) {
        print("Login Failed: $e");
     } finally {
+      // Check if mounted before calling setState in async gaps if needed, 
+      // but strictly following current style
       setState(() => _isAuthLoading = false);
     }
   }
 
   Future<void> _loginAsGuest() async {
-    setState(() {
-      _isLoggedIn = true;
-    });
+    setState(() => _isAuthLoading = true);
+    try {
+       await _authService.loginAsGuest();
+        if (_authService.currentUser != null) {
+        setState(() => _isLoggedIn = true);
+      }
+    } catch (e) {
+      print("Guest Login Failed: $e");
+    } finally {
+      setState(() => _isAuthLoading = false);
+    }
   }
 
   Future<void> _logout() async {
@@ -269,6 +292,13 @@ class _MainScreenState extends State<MainScreen> {
         onAdd: _addPayment,
         isDark: widget.isDark,
       ),
+      
+      HistoryScreen(
+        expenses: _expenses,
+        payments: _payments,
+        isDark: widget.isDark,
+      ),
+      
       AIScreen(
         expenses: _expenses,
         isDark: widget.isDark,
@@ -359,6 +389,10 @@ class _MainScreenState extends State<MainScreen> {
           NavigationDestination(
             icon: Icon(LucideIcons.creditCard),
             label: 'Pay',
+          ),
+          NavigationDestination(
+            icon: Icon(LucideIcons.history),
+            label: 'History',
           ),
           NavigationDestination(
             icon: Icon(LucideIcons.messageSquare),

@@ -112,7 +112,7 @@ class LoginScreen extends StatelessWidget {
                               const Icon(Icons.login),
                               const SizedBox(width: 12),
                               Text(
-                                'Continue',
+                                'Sign in with Google',
                                 style: GoogleFonts.inter(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,

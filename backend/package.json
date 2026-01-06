@@ -7,7 +7,14 @@
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
-  "keywords": ["expense", "tracker", "api"],
+  "keywords": [
+    "expense",
+    "tracker",
+    "api"
+  ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "pg": "^8.16.3"
+  }
 }

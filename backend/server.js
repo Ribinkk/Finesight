@@ -128,6 +128,13 @@ app.delete('/incomes/:id', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+
+// Export for Vercel
+module.exports = app;
+
+// Only listen if run directly (local dev)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}

@@ -1,14 +1,31 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/expense.dart';
 import '../models/payment.dart';
 import '../models/income.dart';
 
 class ApiService {
-  // Use http://localhost:3000 for Web/Desktop. 
-  // For Android Emulator use http://10.0.2.2:3000
-  // For Physical Device use your computer's IP (e.g., http://192.168.x.x:3001)
-  static const String baseUrl = 'http://192.168.16.158:3001';
+  // Platform-specific base URL
+  // Production: Firebase Cloud Functions URL
+  // Development Web: localhost
+  // Development Android Emulator: 10.0.2.2
+  // Development Physical Device: your computer's IP
+  static String get baseUrl {
+    if (kIsWeb) {
+      // In production (Vercel), api is at /api
+      if (const bool.fromEnvironment('dart.vm.product')) {
+        // In Vercel, the API is served at /api/...
+        // The rewrite rule in vercel.json handles this.
+        return '/api'; 
+      }
+      return 'http://localhost:3001';
+    } else {
+      // For mobile devices, use the IP address
+      // Change this to 10.0.2.2:3001 for Android emulator
+      return 'http://192.168.16.158:3001';
+    }
+  }
 
   // --- Expenses ---
   static Future<List<Expense>> getExpenses() async {
@@ -152,6 +169,18 @@ class ApiService {
       }
     } catch (e) {
       print('Error adding income: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteIncome(String id) async {
+    try {
+      final response = await http.delete(Uri.parse('$baseUrl/incomes/$id'));
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete income');
+      }
+    } catch (e) {
+      print('Error deleting income: $e');
       rethrow;
     }
   }
