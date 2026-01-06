@@ -10,9 +10,13 @@ app.use(express.json());
 
 // --- Expenses API ---
 
-// GET all expenses
+// GET expenses for a specific user
 app.get('/expenses', (req, res) => {
-  db.all('SELECT * FROM expenses ORDER BY date DESC', [], (err, rows) => {
+  const userId = req.query.user_id;
+  if (!userId) {
+    return res.status(400).json({ error: 'user_id query parameter is required' });
+  }
+  db.all('SELECT * FROM expenses WHERE user_id = ? ORDER BY date DESC', [userId], (err, rows) => {
     if (err) {
       res.status(400).json({ error: err.message });
       return;
@@ -23,12 +27,24 @@ app.get('/expenses', (req, res) => {
 
 // POST new expense
 app.post('/expenses', (req, res) => {
-  const { id, title, amount, category, date, paymentMethod, description } = req.body;
-  const sql = 'INSERT INTO expenses (id, title, amount, category, date, paymentMethod, description) VALUES (?,?,?,?,?,?,?)';
-  const params = [id, title, amount, category, date, paymentMethod, description];
+  console.log('POST /expenses body:', req.body);
+  const { id, user_id, title, amount, category, date, paymentMethod, description } = req.body;
+  
+  if (!user_id) {
+    console.error('Error: user_id is required');
+    return res.status(400).json({ error: 'user_id is required' });
+  }
+
+  // Defensive: Ensure user_id is a string
+  const safeUserId = String(user_id);
+  console.log('DEBUG: safeUserId:', safeUserId, 'Type:', typeof safeUserId);
+
+  const sql = 'INSERT INTO expenses (id, user_id, title, amount, category, date, paymentMethod, description) VALUES (?,?,?,?,?,?,?,?)';
+  const params = [id, safeUserId, title, amount, category, date, paymentMethod, description];
   
   db.run(sql, params, function (err) {
     if (err) {
+      console.error('Database Error:', err.message);
       res.status(400).json({ error: err.message });
       return;
     }
@@ -40,10 +56,14 @@ app.post('/expenses', (req, res) => {
   });
 });
 
-// DELETE expense
+// DELETE expense (verify user ownership)
 app.delete('/expenses/:id', (req, res) => {
-  const sql = 'DELETE FROM expenses WHERE id = ?';
-  db.run(sql, req.params.id, function (err) {
+  const userId = req.query.user_id;
+  if (!userId) {
+    return res.status(400).json({ error: 'user_id query parameter is required' });
+  }
+  const sql = 'DELETE FROM expenses WHERE id = ? AND user_id = ?';
+  db.run(sql, [req.params.id, userId], function (err) {
     if (err) {
       res.status(400).json({ error: err.message });
       return;
@@ -54,9 +74,13 @@ app.delete('/expenses/:id', (req, res) => {
 
 // --- Payments API ---
 
-// GET all payments
+// GET payments for a specific user
 app.get('/payments', (req, res) => {
-  db.all('SELECT * FROM payments ORDER BY date DESC', [], (err, rows) => {
+  const userId = req.query.user_id;
+  if (!userId) {
+    return res.status(400).json({ error: 'user_id query parameter is required' });
+  }
+  db.all('SELECT * FROM payments WHERE user_id = ? ORDER BY date DESC', [userId], (err, rows) => {
     if (err) {
       res.status(400).json({ error: err.message });
       return;
@@ -67,9 +91,12 @@ app.get('/payments', (req, res) => {
 
 // POST new payment
 app.post('/payments', (req, res) => {
-  const { id, amount, status, razorpayOrderId, date, purpose } = req.body;
-  const sql = 'INSERT INTO payments (id, amount, status, razorpayOrderId, date, purpose) VALUES (?,?,?,?,?,?)';
-  const params = [id, amount, status, razorpayOrderId, date, purpose];
+  const { id, user_id, amount, status, razorpayOrderId, date, purpose } = req.body;
+  if (!user_id) {
+    return res.status(400).json({ error: 'user_id is required' });
+  }
+  const sql = 'INSERT INTO payments (id, user_id, amount, status, razorpayOrderId, date, purpose) VALUES (?,?,?,?,?,?,?)';
+  const params = [id, user_id, amount, status, razorpayOrderId, date, purpose];
   
   db.run(sql, params, function (err) {
     if (err) {
@@ -86,9 +113,13 @@ app.post('/payments', (req, res) => {
 
 // --- Incomes API ---
 
-// GET all incomes
+// GET incomes for a specific user
 app.get('/incomes', (req, res) => {
-  db.all('SELECT * FROM incomes ORDER BY date DESC', [], (err, rows) => {
+  const userId = req.query.user_id;
+  if (!userId) {
+    return res.status(400).json({ error: 'user_id query parameter is required' });
+  }
+  db.all('SELECT * FROM incomes WHERE user_id = ? ORDER BY date DESC', [userId], (err, rows) => {
     if (err) {
       res.status(400).json({ error: err.message });
       return;
@@ -99,9 +130,12 @@ app.get('/incomes', (req, res) => {
 
 // POST new income
 app.post('/incomes', (req, res) => {
-  const { id, source, amount, date, description } = req.body;
-  const sql = 'INSERT INTO incomes (id, source, amount, date, description) VALUES (?,?,?,?,?)';
-  const params = [id, source, amount, date, description];
+  const { id, user_id, source, amount, date, description } = req.body;
+  if (!user_id) {
+    return res.status(400).json({ error: 'user_id is required' });
+  }
+  const sql = 'INSERT INTO incomes (id, user_id, source, amount, date, description) VALUES (?,?,?,?,?,?)';
+  const params = [id, user_id, source, amount, date, description];
   
   db.run(sql, params, function (err) {
     if (err) {
@@ -116,10 +150,14 @@ app.post('/incomes', (req, res) => {
   });
 });
 
-// DELETE income
+// DELETE income (verify user ownership)
 app.delete('/incomes/:id', (req, res) => {
-  const sql = 'DELETE FROM incomes WHERE id = ?';
-  db.run(sql, req.params.id, function (err) {
+  const userId = req.query.user_id;
+  if (!userId) {
+    return res.status(400).json({ error: 'user_id query parameter is required' });
+  }
+  const sql = 'DELETE FROM incomes WHERE id = ? AND user_id = ?';
+  db.run(sql, [req.params.id, userId], function (err) {
     if (err) {
       res.status(400).json({ error: err.message });
       return;

@@ -1,8 +1,3 @@
-
-import 'package:flutter/foundation.dart' show kIsWeb;
-import '../models/user_model.dart';
-
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -17,6 +12,7 @@ class AuthService {
     final user = _firebaseAuth.currentUser;
     if (user == null) return null;
     return UserModel(
+      uid: user.uid,
       name: user.displayName ?? 'User',
       email: user.email ?? '',
       pictureUrl: user.photoURL,
@@ -28,6 +24,7 @@ class AuthService {
     return _firebaseAuth.authStateChanges().map((User? user) {
       if (user == null) return null;
       return UserModel(
+        uid: user.uid,
         name: user.displayName ?? 'User',
         email: user.email ?? '',
         pictureUrl: user.photoURL,
@@ -39,25 +36,20 @@ class AuthService {
   Future<UserModel?> loginWithGoogle() async {
     try {
       if (kIsWeb) {
-        // Web specific Google Sign In
         GoogleAuthProvider googleProvider = GoogleAuthProvider();
-
-        // Trigger the sign-in flow
         UserCredential userCredential = await _firebaseAuth.signInWithPopup(googleProvider);
         
         return UserModel(
+          uid: userCredential.user!.uid,
           name: userCredential.user?.displayName ?? 'User',
           email: userCredential.user?.email ?? '',
           pictureUrl: userCredential.user?.photoURL,
         );
       } else {
-        // Mobile Google Sign In
         final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-        
-        if (googleUser == null) return null; // User canceled
+        if (googleUser == null) return null;
 
         final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
         final OAuthCredential credential = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
@@ -66,6 +58,7 @@ class AuthService {
         final UserCredential userCredential = await _firebaseAuth.signInWithCredential(credential);
         
         return UserModel(
+          uid: userCredential.user!.uid,
           name: userCredential.user?.displayName ?? 'User',
           email: userCredential.user?.email ?? '',
           pictureUrl: userCredential.user?.photoURL,
@@ -81,9 +74,8 @@ class AuthService {
   Future<UserModel> loginAsGuest() async {
     try {
       final userCredential = await _firebaseAuth.signInAnonymously();
-      // You might want to update the profile for anonymous user if needed, 
-      // but usually guest is just anonymous
       return UserModel(
+          uid: userCredential.user!.uid,
           name: 'Guest',
           email: 'guest@finesight.app',
           pictureUrl: null,

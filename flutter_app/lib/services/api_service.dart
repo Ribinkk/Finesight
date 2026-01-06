@@ -7,30 +7,21 @@ import '../models/income.dart';
 
 class ApiService {
   // Platform-specific base URL
-  // Production: Firebase Cloud Functions URL
-  // Development Web: localhost
-  // Development Android Emulator: 10.0.2.2
-  // Development Physical Device: your computer's IP
   static String get baseUrl {
     if (kIsWeb) {
-      // In production (Vercel), api is at /api
       if (const bool.fromEnvironment('dart.vm.product')) {
-        // In Vercel, the API is served at /api/...
-        // The rewrite rule in vercel.json handles this.
         return '/api'; 
       }
       return 'http://localhost:3001';
     } else {
-      // For mobile devices, use the IP address
-      // Change this to 10.0.2.2:3001 for Android emulator
       return 'http://192.168.16.158:3001';
     }
   }
 
   // --- Expenses ---
-  static Future<List<Expense>> getExpenses() async {
+  static Future<List<Expense>> getExpenses(String userId) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/expenses'));
+      final response = await http.get(Uri.parse('$baseUrl/expenses?user_id=$userId'));
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
         final List<dynamic> expensesJson = data['data'];
@@ -40,7 +31,7 @@ class ApiService {
              title: json['title'],
              amount: (json['amount'] as num).toDouble(),
              category: json['category'],
-             date: DateTime.parse(json['date']), // Backend stores ISO string
+             date: DateTime.parse(json['date']),
              paymentMethod: json['paymentMethod'],
              description: json['description'],
            );
@@ -50,17 +41,18 @@ class ApiService {
       }
     } catch (e) {
       print('Error fetching expenses: $e');
-      return []; // Return empty list on error for resiliency
+      return [];
     }
   }
 
-  static Future<void> addExpense(Expense expense) async {
+  static Future<void> addExpense(Expense expense, String userId) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/expenses'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'id': expense.id,
+          'user_id': userId,
           'title': expense.title,
           'amount': expense.amount,
           'category': expense.category,
@@ -69,8 +61,10 @@ class ApiService {
           'description': expense.description,
         }),
       );
+      print('DEBUG: addExpense response status: ${response.statusCode}');
+      print('DEBUG: addExpense response body: ${response.body}');
       if (response.statusCode != 200) {
-        throw Exception('Failed to add expense');
+        throw Exception('Failed to add expense: ${response.body}');
       }
     } catch (e) {
       print('Error adding expense: $e');
@@ -78,9 +72,9 @@ class ApiService {
     }
   }
 
-  static Future<void> deleteExpense(String id) async {
+  static Future<void> deleteExpense(String id, String userId) async {
     try {
-      final response = await http.delete(Uri.parse('$baseUrl/expenses/$id'));
+      final response = await http.delete(Uri.parse('$baseUrl/expenses/$id?user_id=$userId'));
       if (response.statusCode != 200) {
         throw Exception('Failed to delete expense');
       }
@@ -91,9 +85,9 @@ class ApiService {
   }
 
   // --- Payments ---
-  static Future<List<Payment>> getPayments() async {
+  static Future<List<Payment>> getPayments(String userId) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/payments'));
+      final response = await http.get(Uri.parse('$baseUrl/payments?user_id=$userId'));
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
         final List<dynamic> paymentsJson = data['data'];
@@ -116,13 +110,14 @@ class ApiService {
     }
   }
 
-  static Future<void> addPayment(Payment payment) async {
+  static Future<void> addPayment(Payment payment, String userId) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/payments'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'id': payment.id,
+          'user_id': userId,
           'amount': payment.amount,
           'status': payment.status,
           'razorpayOrderId': payment.razorpayOrderId,
@@ -139,9 +134,9 @@ class ApiService {
   }
 
   // --- Incomes ---
-  static Future<List<Income>> getIncomes() async {
+  static Future<List<Income>> getIncomes(String userId) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/incomes'));
+      final response = await http.get(Uri.parse('$baseUrl/incomes?user_id=$userId'));
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
         final List<dynamic> incomesJson = data['data'];
@@ -157,12 +152,14 @@ class ApiService {
     }
   }
 
-  static Future<void> addIncome(Income income) async {
+  static Future<void> addIncome(Income income, String userId) async {
     try {
+      final incomeJson = income.toJson();
+      incomeJson['user_id'] = userId;
       final response = await http.post(
         Uri.parse('$baseUrl/incomes'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode(income.toJson()),
+        body: json.encode(incomeJson),
       );
       if (response.statusCode != 200) {
         throw Exception('Failed to add income');
@@ -173,9 +170,9 @@ class ApiService {
     }
   }
 
-  static Future<void> deleteIncome(String id) async {
+  static Future<void> deleteIncome(String id, String userId) async {
     try {
-      final response = await http.delete(Uri.parse('$baseUrl/incomes/$id'));
+      final response = await http.delete(Uri.parse('$baseUrl/incomes/$id?user_id=$userId'));
       if (response.statusCode != 200) {
         throw Exception('Failed to delete income');
       }

@@ -21,12 +21,14 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
+    print('DEBUG: Attempting to initialize Firebase...');
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    print('DEBUG: Firebase initialized successfully');
+    print('DEBUG: Project ID: ${DefaultFirebaseOptions.currentPlatform.projectId}');
   } catch (e) {
-    print('Firebase initialization failed: $e');
-    // Continue anyway, maybe we are in a mode where we don't need it or it's not configured yet
+    print('DEBUG: Firebase initialization failed: $e');
   }
   runApp(const MyApp());
 }
@@ -191,9 +193,10 @@ class _MainScreenState extends State<MainScreen> {
       _isLoading = true;
     });
     try {
-      final expenses = await ApiService.getExpenses();
-      final payments = await ApiService.getPayments();
-      final incomes = await ApiService.getIncomes();
+      final userId = widget.user?.uid ?? '';
+      final expenses = await ApiService.getExpenses(userId);
+      final payments = await ApiService.getPayments(userId);
+      final incomes = await ApiService.getIncomes(userId);
       setState(() {
         _expenses = expenses;
         _payments = payments;
@@ -212,7 +215,8 @@ class _MainScreenState extends State<MainScreen> {
 
   Future<void> _addIncome(Income income) async {
     try {
-      await ApiService.addIncome(income);
+      final userId = widget.user?.uid ?? '';
+      await ApiService.addIncome(income, userId);
       await _loadData();
     } catch (e) {
        ScaffoldMessenger.of(context).showSnackBar(
@@ -223,7 +227,9 @@ class _MainScreenState extends State<MainScreen> {
 
   Future<void> _addExpense(Expense expense) async {
     try {
-      await ApiService.addExpense(expense);
+      final userId = widget.user?.uid ?? '';
+      print('DEBUG: Calling addExpense with userId: "$userId"');
+      await ApiService.addExpense(expense, userId);
       await _loadData();
     } catch (e) {
        ScaffoldMessenger.of(context).showSnackBar(
@@ -234,7 +240,8 @@ class _MainScreenState extends State<MainScreen> {
 
   Future<void> _deleteExpense(String id) async {
     try {
-      await ApiService.deleteExpense(id);
+      final userId = widget.user?.uid ?? '';
+      await ApiService.deleteExpense(id, userId);
       await _loadData();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -245,7 +252,8 @@ class _MainScreenState extends State<MainScreen> {
 
   Future<void> _addPayment(Payment payment) async {
     try {
-      await ApiService.addPayment(payment);
+      final userId = widget.user?.uid ?? '';
+      await ApiService.addPayment(payment, userId);
       await _loadData();
     } catch (e) {
        ScaffoldMessenger.of(context).showSnackBar(

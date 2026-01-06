@@ -28,8 +28,14 @@ if (isPostgres) {
 
 function initSqliteDb() {
   db.serialize(() => {
+    // Drop old tables to start fresh with user_id
+    db.run(`DROP TABLE IF EXISTS expenses`);
+    db.run(`DROP TABLE IF EXISTS payments`);
+    db.run(`DROP TABLE IF EXISTS incomes`);
+
     db.run(`CREATE TABLE IF NOT EXISTS expenses (
       id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
       title TEXT NOT NULL,
       amount REAL NOT NULL,
       category TEXT NOT NULL,
@@ -40,6 +46,7 @@ function initSqliteDb() {
 
     db.run(`CREATE TABLE IF NOT EXISTS payments (
       id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
       amount REAL NOT NULL,
       status TEXT NOT NULL,
       razorpayOrderId TEXT,
@@ -49,11 +56,17 @@ function initSqliteDb() {
 
     db.run(`CREATE TABLE IF NOT EXISTS incomes (
       id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
       source TEXT NOT NULL,
       amount REAL NOT NULL,
       date TEXT NOT NULL,
       description TEXT
     )`);
+
+    // Create indexes for user_id
+    db.run(`CREATE INDEX IF NOT EXISTS idx_expenses_user ON expenses(user_id)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_incomes_user ON incomes(user_id)`);
   });
 }
 
@@ -61,8 +74,14 @@ async function initPgDb() {
   try {
     const client = await pool.connect();
     try {
+      // Drop old tables to start fresh with user_id
+      await client.query(`DROP TABLE IF EXISTS expenses`);
+      await client.query(`DROP TABLE IF EXISTS payments`);
+      await client.query(`DROP TABLE IF EXISTS incomes`);
+
       await client.query(`CREATE TABLE IF NOT EXISTS expenses (
         id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
         title TEXT NOT NULL,
         amount REAL NOT NULL,
         category TEXT NOT NULL,
@@ -73,6 +92,7 @@ async function initPgDb() {
 
       await client.query(`CREATE TABLE IF NOT EXISTS payments (
         id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
         amount REAL NOT NULL,
         status TEXT NOT NULL,
         "razorpayOrderId" TEXT,
@@ -82,11 +102,17 @@ async function initPgDb() {
 
       await client.query(`CREATE TABLE IF NOT EXISTS incomes (
         id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
         source TEXT NOT NULL,
         amount REAL NOT NULL,
         date TEXT NOT NULL,
         description TEXT
       )`);
+
+      // Create indexes
+      await client.query(`CREATE INDEX IF NOT EXISTS idx_expenses_user ON expenses(user_id)`);
+      await client.query(`CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id)`);
+      await client.query(`CREATE INDEX IF NOT EXISTS idx_incomes_user ON incomes(user_id)`);
     } finally {
       client.release();
     }

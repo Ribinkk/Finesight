@@ -1,11 +1,1 @@
-{
-  "public": "build/web",
-  "hosting": {
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
-  }
-}
+{"public":"build/web","hosting":{"rewrites":[{"source":"**","destination":"/index.html"}]},"flutter":{"platforms":{"android":{"default":{"projectId":"finesight-ai","appId":"1:184427287724:android:89c704bfc7846667f4bb09","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"finesight-ai","configurations":{"android":"1:184427287724:android:89c704bfc7846667f4bb09","ios":"1:184427287724:ios:c0017a55283177a5f4bb09","macos":"1:184427287724:ios:c0017a55283177a5f4bb09","web":"1:184427287724:web:a69f71cc09f2d267f4bb09","windows":"1:184427287724:web:f5f39ea94c4c7971f4bb09"}}}}}}
