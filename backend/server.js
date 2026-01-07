@@ -1,171 +1,197 @@
 const express = require('express');
 const cors = require('cors');
-const db = require('./database');
+const mongoose = require('mongoose');
+
+const Expense = require('./models/Expense');
+const Payment = require('./models/Payment');
+const Income = require('./models/Income');
 
 const app = express();
 const PORT = 3001;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
+
+// MongoDB Connection
+// Note: In Vercel, set MONGODB_URI environment variable
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  console.warn('Warning: MONGODB_URI is not defined. Database connection will fail.');
+} else {
+  mongoose.connect(MONGODB_URI)
+    .then(() => console.log('Connected to MongoDB'))
+    .catch(err => console.error('MongoDB connection error:', err));
+}
+
+const router = express.Router();
 
 // --- Expenses API ---
 
 // GET expenses for a specific user
-app.get('/expenses', (req, res) => {
+router.get('/expenses', async (req, res) => {
   const userId = req.query.user_id;
   if (!userId) {
     return res.status(400).json({ error: 'user_id query parameter is required' });
   }
-  db.all('SELECT * FROM expenses WHERE user_id = ? ORDER BY date DESC', [userId], (err, rows) => {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
-    }
-    res.json({ data: rows });
-  });
+  try {
+    const expenses = await Expense.find({ user_id: userId }).sort({ date: -1 });
+    // Transform _id to id if needed, but we are storing a custom 'id' field from frontend
+    // The frontend expects { data: [...] }
+    res.json({ data: expenses });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // POST new expense
-app.post('/expenses', (req, res) => {
-  console.log('POST /expenses body:', req.body);
-  const { id, user_id, title, amount, category, date, paymentMethod, description } = req.body;
-  
-  if (!user_id) {
-    console.error('Error: user_id is required');
-    return res.status(400).json({ error: 'user_id is required' });
-  }
-
-  // Defensive: Ensure user_id is a string
-  const safeUserId = String(user_id);
-  console.log('DEBUG: safeUserId:', safeUserId, 'Type:', typeof safeUserId);
-
-  const sql = 'INSERT INTO expenses (id, user_id, title, amount, category, date, paymentMethod, description) VALUES (?,?,?,?,?,?,?,?)';
-  const params = [id, safeUserId, title, amount, category, date, paymentMethod, description];
-  
-  db.run(sql, params, function (err) {
-    if (err) {
-      console.error('Database Error:', err.message);
-      res.status(400).json({ error: err.message });
-      return;
+router.post('/expenses', async (req, res) => {
+  try {
+    const { id, user_id, title, amount, category, date, paymentMethod, description } = req.body;
+    
+    if (!user_id) {
+       return res.status(400).json({ error: 'user_id is required' });
     }
-    res.json({
-      message: 'success',
-      data: req.body,
-      changes: this.changes
+
+    const newExpense = new Expense({
+      id, // Client-side ID
+      user_id,
+      title,
+      amount,
+      category,
+      date,
+      paymentMethod,
+      description
     });
-  });
+
+    await newExpense.save();
+    res.json({ message: 'success', data: newExpense });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
-// DELETE expense (verify user ownership)
-app.delete('/expenses/:id', (req, res) => {
+// DELETE expense
+router.delete('/expenses/:id', async (req, res) => {
   const userId = req.query.user_id;
   if (!userId) {
-    return res.status(400).json({ error: 'user_id query parameter is required' });
+     return res.status(400).json({ error: 'user_id query parameter is required' });
   }
-  const sql = 'DELETE FROM expenses WHERE id = ? AND user_id = ?';
-  db.run(sql, [req.params.id, userId], function (err) {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
+  try {
+    // We search by the custom 'id' field, NOT default _id
+    const result = await Expense.findOneAndDelete({ id: req.params.id, user_id: userId });
+    if (!result) {
+      return res.status(404).json({ error: 'Expense not found' });
     }
-    res.json({ message: 'deleted', changes: this.changes });
-  });
+    res.json({ message: 'deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // --- Payments API ---
 
-// GET payments for a specific user
-app.get('/payments', (req, res) => {
+// GET payments
+router.get('/payments', async (req, res) => {
   const userId = req.query.user_id;
   if (!userId) {
     return res.status(400).json({ error: 'user_id query parameter is required' });
   }
-  db.all('SELECT * FROM payments WHERE user_id = ? ORDER BY date DESC', [userId], (err, rows) => {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
-    }
-    res.json({ data: rows });
-  });
+  try {
+    const payments = await Payment.find({ user_id: userId }).sort({ date: -1 });
+    res.json({ data: payments });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // POST new payment
-app.post('/payments', (req, res) => {
-  const { id, user_id, amount, status, razorpayOrderId, date, purpose } = req.body;
-  if (!user_id) {
-    return res.status(400).json({ error: 'user_id is required' });
-  }
-  const sql = 'INSERT INTO payments (id, user_id, amount, status, razorpayOrderId, date, purpose) VALUES (?,?,?,?,?,?,?)';
-  const params = [id, user_id, amount, status, razorpayOrderId, date, purpose];
-  
-  db.run(sql, params, function (err) {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
+router.post('/payments', async (req, res) => {
+  try {
+    const { id, user_id, amount, status, razorpayOrderId, date, purpose } = req.body;
+    if (!user_id) {
+       return res.status(400).json({ error: 'user_id is required' });
     }
-    res.json({
-      message: 'success',
-      data: req.body,
-      changes: this.changes
+
+    const newPayment = new Payment({
+      id,
+      user_id,
+      amount,
+      status,
+      razorpayOrderId,
+      date,
+      purpose
     });
-  });
+
+    await newPayment.save();
+    res.json({ message: 'success', data: newPayment });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // --- Incomes API ---
 
-// GET incomes for a specific user
-app.get('/incomes', (req, res) => {
+// GET incomes
+router.get('/incomes', async (req, res) => {
   const userId = req.query.user_id;
   if (!userId) {
     return res.status(400).json({ error: 'user_id query parameter is required' });
   }
-  db.all('SELECT * FROM incomes WHERE user_id = ? ORDER BY date DESC', [userId], (err, rows) => {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
-    }
-    res.json({ data: rows });
-  });
+  try {
+    const incomes = await Income.find({ user_id: userId }).sort({ date: -1 });
+    res.json({ data: incomes });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // POST new income
-app.post('/incomes', (req, res) => {
-  const { id, user_id, source, amount, date, description } = req.body;
-  if (!user_id) {
-    return res.status(400).json({ error: 'user_id is required' });
-  }
-  const sql = 'INSERT INTO incomes (id, user_id, source, amount, date, description) VALUES (?,?,?,?,?,?)';
-  const params = [id, user_id, source, amount, date, description];
-  
-  db.run(sql, params, function (err) {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
+router.post('/incomes', async (req, res) => {
+  try {
+    const { id, user_id, source, amount, date, description } = req.body;
+    if (!user_id) {
+       return res.status(400).json({ error: 'user_id is required' });
     }
-    res.json({
-      message: 'success',
-      data: req.body,
-      changes: this.changes
+    
+    const newIncome = new Income({
+      id,
+      user_id,
+      source,
+      amount,
+      date,
+      description
     });
-  });
+    
+    await newIncome.save();
+    res.json({ message: 'success', data: newIncome });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
-// DELETE income (verify user ownership)
-app.delete('/incomes/:id', (req, res) => {
+// DELETE income
+router.delete('/incomes/:id', async (req, res) => {
   const userId = req.query.user_id;
   if (!userId) {
-    return res.status(400).json({ error: 'user_id query parameter is required' });
+     return res.status(400).json({ error: 'user_id query parameter is required' });
   }
-  const sql = 'DELETE FROM incomes WHERE id = ? AND user_id = ?';
-  db.run(sql, [req.params.id, userId], function (err) {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
+  try {
+    const result = await Income.findOneAndDelete({ id: req.params.id, user_id: userId });
+    if (!result) {
+      return res.status(404).json({ error: 'Income not found' });
     }
-    res.json({ message: 'deleted', changes: this.changes });
-  });
+    res.json({ message: 'deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
+
+// Mount router
+app.use('/api', router);
+app.use('/', router);
 
 // Export for Vercel
 module.exports = app;

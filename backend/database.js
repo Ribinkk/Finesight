@@ -15,12 +15,18 @@ if (isPostgres) {
   console.log('Connected to PostgreSQL database.');
   initPgDb();
 } else {
-  const dbPath = path.resolve(__dirname, 'expense_tracker.db');
+  let dbPath;
+  if (process.env.VERCEL) {
+    dbPath = path.join('/tmp', 'expense_tracker.db');
+  } else {
+    dbPath = path.resolve(__dirname, 'expense_tracker.db');
+  }
+  
   db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
       console.error('Error opening database ', err.message);
     } else {
-      console.log('Connected to the SQLite database.');
+      console.log(`Connected to the SQLite database at ${dbPath}.`);
       initSqliteDb();
     }
   });
@@ -28,11 +34,7 @@ if (isPostgres) {
 
 function initSqliteDb() {
   db.serialize(() => {
-    // Drop old tables to start fresh with user_id
-    db.run(`DROP TABLE IF EXISTS expenses`);
-    db.run(`DROP TABLE IF EXISTS payments`);
-    db.run(`DROP TABLE IF EXISTS incomes`);
-
+    // Tables
     db.run(`CREATE TABLE IF NOT EXISTS expenses (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
@@ -74,11 +76,7 @@ async function initPgDb() {
   try {
     const client = await pool.connect();
     try {
-      // Drop old tables to start fresh with user_id
-      await client.query(`DROP TABLE IF EXISTS expenses`);
-      await client.query(`DROP TABLE IF EXISTS payments`);
-      await client.query(`DROP TABLE IF EXISTS incomes`);
-
+      // Tables
       await client.query(`CREATE TABLE IF NOT EXISTS expenses (
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL,

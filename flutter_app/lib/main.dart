@@ -136,16 +136,27 @@ class _MyAppState extends State<MyApp> {
         textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
       ),
       themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
-      home: _isLoggedIn 
-          ? MainScreen(
+      home: StreamBuilder<UserModel?>(
+        stream: _authService.authStateChanges,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (snapshot.hasData) {
+            return MainScreen(
               toggleTheme: toggleTheme, 
               isDark: isDark, 
-              user: _authService.currentUser, 
+              user: snapshot.data, 
               onLogout: _logout,
               categories: _categories,
               onAddCategory: _addCategory,
-            )
-          : LoginScreen(onLogin: _login, onGuestLogin: _loginAsGuest, isLoading: _isAuthLoading),
+            );
+          }
+          return LoginScreen(onLogin: _login, onGuestLogin: _loginAsGuest, isLoading: _isAuthLoading);
+        },
+      ),
       debugShowCheckedModeBanner: false,
     );
   }
