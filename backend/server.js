@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const Expense = require('./models/Expense');
 const Payment = require('./models/Payment');
 const Income = require('./models/Income');
+const Budget = require('./models/Budget');
 
 const app = express();
 const PORT = 3001;
@@ -181,6 +182,63 @@ router.delete('/incomes/:id', async (req, res) => {
     const result = await Income.findOneAndDelete({ id: req.params.id, user_id: userId });
     if (!result) {
       return res.status(404).json({ error: 'Income not found' });
+    }
+    res.json({ message: 'deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// --- Budgets API ---
+
+// GET budgets for a specific user
+router.get('/budgets', async (req, res) => {
+  const userId = req.query.user_id;
+  if (!userId) {
+    return res.status(400).json({ error: 'user_id query parameter is required' });
+  }
+  try {
+    const month = req.query.month ? parseInt(req.query.month) : new Date().getMonth() + 1;
+    const year = req.query.year ? parseInt(req.query.year) : new Date().getFullYear();
+    const budgets = await Budget.find({ user_id: userId, month, year });
+    res.json({ data: budgets });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST/PUT budget (upsert)
+router.post('/budgets', async (req, res) => {
+  try {
+    const { id, user_id, category, limit, month, year } = req.body;
+    if (!user_id) {
+      return res.status(400).json({ error: 'user_id is required' });
+    }
+    
+    // Upsert: Update if exists, create if not
+    const budget = await Budget.findOneAndUpdate(
+      { user_id, category, month, year },
+      { id, user_id, category, limit, month, year },
+      { upsert: true, new: true }
+    );
+    
+    res.json({ message: 'success', data: budget });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// DELETE budget
+router.delete('/budgets/:id', async (req, res) => {
+  const userId = req.query.user_id;
+  if (!userId) {
+    return res.status(400).json({ error: 'user_id query parameter is required' });
+  }
+  try {
+    const result = await Budget.findOneAndDelete({ id: req.params.id, user_id: userId });
+    if (!result) {
+      return res.status(404).json({ error: 'Budget not found' });
     }
     res.json({ message: 'deleted' });
   } catch (err) {

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
+import '../models/budget.dart';
+import '../services/api_service.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:uuid/uuid.dart';
 
 class ProfileScreen extends StatefulWidget {
   final UserModel? user;
@@ -115,6 +118,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  void _showBudgetGoalsDialog() {
+    final userId = widget.user?.uid ?? '';
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return FutureBuilder<List<Budget>>(
+            future: ApiService.getBudgets(userId),
+            builder: (context, snapshot) {
+              final budgets = snapshot.data ?? [];
+              final budgetMap = <String, double>{};
+              for (var b in budgets) {
+                budgetMap[b.category] = b.limit;
+              }
+              
+              return AlertDialog(
+                backgroundColor: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
+                title: Row(
+                  children: [
+                    Icon(LucideIcons.target, color: Colors.purple),
+                    const SizedBox(width: 8),
+                    Text('Set Budget Goals', style: TextStyle(color: widget.isDark ? Colors.white : Colors.black)),
+                  ],
+                ),
+                content: SizedBox(
+                  width: double.maxFinite,
+                  height: 400,
+                  child: snapshot.connectionState == ConnectionState.waiting
+                      ? const Center(child: CircularProgressIndicator())
+                      : ListView.builder(
+                          itemCount: widget.categories.length,
+                          itemBuilder: (context, index) {
+                            final category = widget.categories[index];
+                            final currentLimit = budgetMap[category];
+                            
+                            return _BudgetCategoryTile(
+                              category: category,
+                              currentLimit: currentLimit,
+                              isDark: widget.isDark,
+                              onSave: (limit) async {
+                                final now = DateTime.now();
+                                final budget = Budget(
+                                  id: const Uuid().v4(),
+                                  category: category,
+                                  limit: limit,
+                                  month: now.month,
+                                  year: now.year,
+                                );
+                                try {
+                                  await ApiService.setBudget(budget, userId);
+                                  setDialogState(() {});
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Budget set for $category')),
+                                  );
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Failed to set budget: $e')),
+                                  );
+                                }
+                              },
+                            );
+                          },
+                        ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: const Text('Done', style: TextStyle(color: Colors.green)),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -198,6 +280,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             _buildSettingsTile(
               context,
+              icon: LucideIcons.target,
+              title: 'Set Budget Goals',
+              onTap: _showBudgetGoalsDialog,
+            ),
+            _buildSettingsTile(
+              context,
               icon: LucideIcons.helpCircle,
               title: 'Help & Support',
             ),
@@ -246,6 +334,104 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         trailing: trailing ?? Icon(LucideIcons.chevronRight, size: 20, color: widget.isDark ? Colors.grey : Colors.grey.shade400),
+      ),
+    );
+  }
+}
+
+class _BudgetCategoryTile extends StatefulWidget {
+  final String category;
+  final double? currentLimit;
+  final bool isDark;
+  final Future<void> Function(double) onSave;
+
+  const _BudgetCategoryTile({
+    required this.category,
+    required this.currentLimit,
+    required this.isDark,
+    required this.onSave,
+  });
+
+  @override
+  State<_BudgetCategoryTile> createState() => _BudgetCategoryTileState();
+}
+
+class _BudgetCategoryTileState extends State<_BudgetCategoryTile> {
+  late TextEditingController _controller;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(
+      text: widget.currentLimit?.toStringAsFixed(0) ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              widget.category,
+              style: TextStyle(
+                color: widget.isDark ? Colors.white : Colors.black,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: TextField(
+              controller: _controller,
+              keyboardType: TextInputType.number,
+              style: TextStyle(color: widget.isDark ? Colors.white : Colors.black),
+              decoration: InputDecoration(
+                prefixText: '₹ ',
+                prefixStyle: TextStyle(color: widget.isDark ? Colors.grey : Colors.grey.shade600),
+                hintText: 'Limit',
+                hintStyle: TextStyle(color: widget.isDark ? Colors.grey.shade600 : Colors.grey),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: widget.isDark ? Colors.grey.shade700 : Colors.grey.shade300),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: widget.isDark ? Colors.grey.shade700 : Colors.grey.shade300),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          _isSaving
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : IconButton(
+                  icon: const Icon(LucideIcons.save, color: Colors.green),
+                  onPressed: () async {
+                    final value = double.tryParse(_controller.text);
+                    if (value != null && value > 0) {
+                      setState(() => _isSaving = true);
+                      await widget.onSave(value);
+                      setState(() => _isSaving = false);
+                    }
+                  },
+                ),
+        ],
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/expense.dart';
 import '../models/payment.dart';
 import '../models/income.dart';
+import '../models/budget.dart';
 
 class ApiService {
   // Platform-specific base URL
@@ -178,6 +179,56 @@ class ApiService {
       }
     } catch (e) {
       print('Error deleting income: $e');
+      rethrow;
+    }
+  }
+
+  // --- Budgets ---
+  static Future<List<Budget>> getBudgets(String userId, {int? month, int? year}) async {
+    try {
+      final now = DateTime.now();
+      final m = month ?? now.month;
+      final y = year ?? now.year;
+      final response = await http.get(Uri.parse('$baseUrl/budgets?user_id=$userId&month=$m&year=$y'));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        final List<dynamic> budgetsJson = data['data'];
+        return budgetsJson.map((json) => Budget.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load budgets');
+      }
+    } catch (e) {
+      print('Error fetching budgets: $e');
+      return [];
+    }
+  }
+
+  static Future<void> setBudget(Budget budget, String userId) async {
+    try {
+      final budgetJson = budget.toJson();
+      budgetJson['user_id'] = userId;
+      final response = await http.post(
+        Uri.parse('$baseUrl/budgets'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(budgetJson),
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Failed to set budget');
+      }
+    } catch (e) {
+      print('Error setting budget: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteBudget(String id, String userId) async {
+    try {
+      final response = await http.delete(Uri.parse('$baseUrl/budgets/$id?user_id=$userId'));
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete budget');
+      }
+    } catch (e) {
+      print('Error deleting budget: $e');
       rethrow;
     }
   }

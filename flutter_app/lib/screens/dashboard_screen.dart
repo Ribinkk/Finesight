@@ -6,19 +6,24 @@ import 'package:intl/intl.dart';
 import '../models/expense.dart';
 import '../models/payment.dart';
 import '../models/income.dart';
+import '../models/budget.dart';
 
 class DashboardScreen extends StatelessWidget {
   final List<Expense> expenses;
   final List<Payment> payments;
   final List<Income> incomes;
+  final List<Budget> budgets;
   final bool isDark;
+  final Future<void> Function()? onRefresh;
 
   const DashboardScreen({
     super.key,
     required this.expenses,
     required this.payments,
     required this.incomes,
+    this.budgets = const [],
     required this.isDark,
+    this.onRefresh,
   });
 
   @override
@@ -49,9 +54,13 @@ class DashboardScreen extends StatelessWidget {
     
     final currencyFormatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
+    return RefreshIndicator(
+      onRefresh: onRefresh ?? () async {},
+      color: Colors.green,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Slogan
@@ -315,8 +324,161 @@ class DashboardScreen extends StatelessWidget {
           ),
 
 
+          // Budget Progress Section
+          if (budgets.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Card(
+              color: isDark ? const Color(0xFF0F172A) : Colors.white,
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(LucideIcons.target, color: isDark ? Colors.purple.shade300 : Colors.purple),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Budget Goals',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    ...budgets.map((budget) {
+                      // Calculate spending for this category this month
+                      final now = DateTime.now();
+                      final categorySpending = expenses
+                          .where((e) =>
+                              e.category.toLowerCase() == budget.category.toLowerCase() &&
+                              e.date.month == now.month &&
+                              e.date.year == now.year)
+                          .fold(0.0, (sum, e) => sum + e.amount);
+                      
+                      final percentage = budget.limit > 0 
+                          ? (categorySpending / budget.limit).clamp(0.0, 1.5)
+                          : 0.0;
+                      final isOverBudget = categorySpending > budget.limit;
+                      final isNearLimit = percentage >= 0.8 && !isOverBudget;
+                      
+                      Color progressColor;
+                      if (isOverBudget) {
+                        progressColor = Colors.red;
+                      } else if (isNearLimit) {
+                        progressColor = Colors.orange;
+                      } else {
+                        progressColor = Colors.green;
+                      }
+                      
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      _getCategoryIcon(budget.category),
+                                      size: 16,
+                                      color: _getCategoryColor(budget.category),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      budget.category,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark ? Colors.white : Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      '₹${categorySpending.toStringAsFixed(0)}',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: progressColor,
+                                      ),
+                                    ),
+                                    Text(
+                                      ' / ₹${budget.limit.toStringAsFixed(0)}',
+                                      style: TextStyle(
+                                        color: isDark ? Colors.grey : Colors.grey.shade600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Stack(
+                              children: [
+                                Container(
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                                FractionallySizedBox(
+                                  widthFactor: percentage.clamp(0.0, 1.0),
+                                  child: Container(
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: progressColor,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (isOverBudget) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(LucideIcons.alertTriangle, size: 12, color: Colors.red),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Over budget by ₹${(categorySpending - budget.limit).toStringAsFixed(0)}',
+                                    style: TextStyle(color: Colors.red, fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ] else if (isNearLimit) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(LucideIcons.alertCircle, size: 12, color: Colors.orange),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Approaching limit (${(percentage * 100).toStringAsFixed(0)}%)',
+                                    style: TextStyle(color: Colors.orange, fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ),
+            ),
+          ],
+
           const SizedBox(height: 80), // Bottom padding for FAB/Nav
         ],
+        ),
       ),
     );
   }

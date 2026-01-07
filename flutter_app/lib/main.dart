@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'models/expense.dart';
 import 'models/payment.dart';
 import 'models/income.dart';
+import 'models/budget.dart';
 import 'models/user_model.dart';
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
@@ -51,6 +53,24 @@ class _MyAppState extends State<MyApp> {
     'Health', 'Education', 'Groceries', 'Rent', 'Investments', 'Travel', 'Other'
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _loadThemePreference();
+  }
+
+  Future<void> _loadThemePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isDark = prefs.getBool('isDarkTheme') ?? true;
+    });
+  }
+
+  Future<void> _saveThemePreference(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDarkTheme', value);
+  }
+
   void _addCategory(String category) {
     if (!_categories.contains(category)) {
       setState(() {
@@ -62,6 +82,7 @@ class _MyAppState extends State<MyApp> {
   void toggleTheme() {
     setState(() {
       isDark = !isDark;
+      _saveThemePreference(isDark);
     });
   }
 
@@ -191,6 +212,7 @@ class _MainScreenState extends State<MainScreen> {
   List<Expense> _expenses = [];
   List<Payment> _payments = [];
   List<Income> _incomes = [];
+  List<Budget> _budgets = [];
   bool _isLoading = true;
 
   @override
@@ -208,10 +230,12 @@ class _MainScreenState extends State<MainScreen> {
       final expenses = await ApiService.getExpenses(userId);
       final payments = await ApiService.getPayments(userId);
       final incomes = await ApiService.getIncomes(userId);
+      final budgets = await ApiService.getBudgets(userId);
       setState(() {
         _expenses = expenses;
         _payments = payments;
         _incomes = incomes;
+        _budgets = budgets;
         _isLoading = false;
       });
     } catch (e) {
@@ -303,7 +327,9 @@ class _MainScreenState extends State<MainScreen> {
         expenses: _expenses,
         payments: _payments,
         incomes: _incomes,
+        budgets: _budgets,
         isDark: widget.isDark,
+        onRefresh: _loadData,
       ),
 
       PaymentsScreen(
@@ -316,6 +342,7 @@ class _MainScreenState extends State<MainScreen> {
         expenses: _expenses,
         payments: _payments,
         isDark: widget.isDark,
+        onRefresh: _loadData,
       ),
       
       AIScreen(
