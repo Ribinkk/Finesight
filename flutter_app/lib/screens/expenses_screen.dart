@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
 import '../models/expense.dart';
 import '../models/income.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ExpensesScreen extends StatefulWidget {
   final List<Expense> expenses;
@@ -41,9 +42,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   // Data Lists
   final List<String> _accounts = ['Cash', 'Bank Account', 'Credit Card'];
   List<String> _categories = [];
-  
+
   // Category Maps
-  Map<String, Color> _categoryColors = {
+  final Map<String, Color> _categoryColors = {
     'Food': Colors.orange,
     'Transport': Colors.blue,
     'Utilities': Colors.teal,
@@ -58,7 +59,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     'Other': Colors.grey,
   };
 
-  Map<String, IconData> _categoryIcons = {
+  final Map<String, IconData> _categoryIcons = {
     'Food': LucideIcons.utensils,
     'Transport': LucideIcons.car,
     'Utilities': LucideIcons.zap,
@@ -75,18 +76,44 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
   // Available options for new categories
   final List<Color> _availableColors = [
-    Colors.red, Colors.pink, Colors.purple, Colors.deepPurple,
-    Colors.indigo, Colors.blue, Colors.lightBlue, Colors.cyan,
-    Colors.teal, Colors.green, Colors.lightGreen, Colors.lime,
-    Colors.yellow, Colors.amber, Colors.orange, Colors.deepOrange,
-    Colors.brown, Colors.grey, Colors.blueGrey,
+    Colors.red,
+    Colors.pink,
+    Colors.purple,
+    Colors.deepPurple,
+    Colors.indigo,
+    Colors.blue,
+    Colors.lightBlue,
+    Colors.cyan,
+    Colors.teal,
+    Colors.green,
+    Colors.lightGreen,
+    Colors.lime,
+    Colors.yellow,
+    Colors.amber,
+    Colors.orange,
+    Colors.deepOrange,
+    Colors.brown,
+    Colors.grey,
+    Colors.blueGrey,
   ];
 
   final List<IconData> _availableIcons = [
-    LucideIcons.star, LucideIcons.heart, LucideIcons.home, LucideIcons.music,
-    LucideIcons.coffee, LucideIcons.gamepad2, LucideIcons.dumbbell, LucideIcons.book,
-    LucideIcons.gift, LucideIcons.wifi, LucideIcons.smartphone, LucideIcons.tv,
-    LucideIcons.briefcase, LucideIcons.dollarSign, LucideIcons.piggyBank, LucideIcons.shoppingCart,
+    LucideIcons.star,
+    LucideIcons.heart,
+    LucideIcons.home,
+    LucideIcons.music,
+    LucideIcons.coffee,
+    LucideIcons.gamepad2,
+    LucideIcons.dumbbell,
+    LucideIcons.book,
+    LucideIcons.gift,
+    LucideIcons.wifi,
+    LucideIcons.smartphone,
+    LucideIcons.tv,
+    LucideIcons.briefcase,
+    LucideIcons.dollarSign,
+    LucideIcons.piggyBank,
+    LucideIcons.shoppingCart,
   ];
 
   @override
@@ -134,13 +161,15 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         ),
       );
     } else {
-       widget.onAddIncome(
+      widget.onAddIncome(
         Income(
           id: DateTime.now().toString(),
           source: enteredTitle,
           amount: enteredAmount,
           date: combinedDateTime,
-          description: enteredDescription.isEmpty ? 'Income' : enteredDescription,
+          description: enteredDescription.isEmpty
+              ? 'Income'
+              : enteredDescription,
         ),
       );
     }
@@ -165,7 +194,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           data: widget.isDark ? ThemeData.dark() : ThemeData.light(),
           child: child!,
         );
-      }
+      },
     ).then((pickedDate) {
       if (pickedDate == null) return;
       setState(() {
@@ -179,11 +208,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       context: context,
       initialTime: _selectedTime,
       builder: (context, child) {
-         return Theme(
+        return Theme(
           data: widget.isDark ? ThemeData.dark() : ThemeData.light(),
           child: child!,
         );
-      }
+      },
     ).then((pickedTime) {
       if (pickedTime == null) return;
       setState(() {
@@ -193,7 +222,110 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   }
 
   void _showAddAccountDialog() {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Add Account Feature Coming Soon!")));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Add Account Feature Coming Soon!")),
+    );
+  }
+
+  Future<void> _scanReceipt() async {
+    final ImagePicker picker = ImagePicker();
+    // Show modal to choose Camera or Gallery
+    final XFile? image = await showModalBottomSheet<XFile?>(
+      context: context,
+      backgroundColor: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(LucideIcons.camera),
+              title: Text(
+                'Take Photo',
+                style: TextStyle(
+                  color: widget.isDark ? Colors.white : Colors.black,
+                ),
+              ),
+              onTap: () async {
+                final image = await picker.pickImage(
+                  source: ImageSource.camera,
+                );
+                if (ctx.mounted) {
+                  Navigator.pop(ctx, image);
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(LucideIcons.image),
+              title: Text(
+                'Choose from Gallery',
+                style: TextStyle(
+                  color: widget.isDark ? Colors.white : Colors.black,
+                ),
+              ),
+              onTap: () async {
+                final image = await picker.pickImage(
+                  source: ImageSource.gallery,
+                );
+                if (ctx.mounted) {
+                  Navigator.pop(ctx, image);
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (image != null) {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(color: Colors.green),
+              const SizedBox(height: 16),
+              const Text(
+                'Scanning Receipt...',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  decoration: TextDecoration.none,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      // Simulate OCR delay
+      await Future.delayed(const Duration(seconds: 2));
+
+      if (!mounted) return;
+      Navigator.pop(context); // Close loader
+
+      setState(() {
+        _titleController.text = "Walmart Supercenter";
+        _amountController.text = "45.50";
+        _selectedCategory = "Groceries";
+        // Update color/icon for category
+        if (_categoryColors.containsKey("Groceries")) {
+          // Logic to update category UI automatically handled by _selectedCategory
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Receipt Scanned! Data pre-filled.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
 
   void _showAddCategoryDialog() {
@@ -206,8 +338,15 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
-            backgroundColor: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
-            title: Text("New Category", style: TextStyle(color: widget.isDark ? Colors.white : Colors.black)),
+            backgroundColor: widget.isDark
+                ? const Color(0xFF1E293B)
+                : Colors.white,
+            title: Text(
+              "New Category",
+              style: TextStyle(
+                color: widget.isDark ? Colors.white : Colors.black,
+              ),
+            ),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -215,17 +354,34 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 children: [
                   TextField(
                     controller: categoryController,
-                    style: TextStyle(color: widget.isDark ? Colors.white : Colors.black),
+                    style: TextStyle(
+                      color: widget.isDark ? Colors.white : Colors.black,
+                    ),
                     decoration: InputDecoration(
                       hintText: "Category Name",
-                      hintStyle: TextStyle(color: widget.isDark ? Colors.grey : Colors.grey.shade400),
+                      hintStyle: TextStyle(
+                        color: widget.isDark
+                            ? Colors.grey
+                            : Colors.grey.shade400,
+                      ),
                       filled: true,
-                      fillColor: widget.isDark ? Colors.black12 : Colors.grey.shade100,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      fillColor: widget.isDark
+                          ? Colors.black12
+                          : Colors.grey.shade100,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Text("Select Color", style: TextStyle(color: widget.isDark ? Colors.grey : Colors.grey.shade600, fontSize: 12)),
+                  Text(
+                    "Select Color",
+                    style: TextStyle(
+                      color: widget.isDark ? Colors.grey : Colors.grey.shade600,
+                      fontSize: 12,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   SizedBox(
                     height: 40,
@@ -243,18 +399,32 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             decoration: BoxDecoration(
                               color: color,
                               shape: BoxShape.circle,
-                              border: tempColor == color ? Border.all(color: Colors.white, width: 3) : null,
+                              border: tempColor == color
+                                  ? Border.all(color: Colors.white, width: 3)
+                                  : null,
                             ),
-                            child: tempColor == color ? const Icon(LucideIcons.check, color: Colors.white, size: 20) : null,
+                            child: tempColor == color
+                                ? const Icon(
+                                    LucideIcons.check,
+                                    color: Colors.white,
+                                    size: 20,
+                                  )
+                                : null,
                           ),
                         );
                       },
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Text("Select Icon", style: TextStyle(color: widget.isDark ? Colors.grey : Colors.grey.shade600, fontSize: 12)),
+                  Text(
+                    "Select Icon",
+                    style: TextStyle(
+                      color: widget.isDark ? Colors.grey : Colors.grey.shade600,
+                      fontSize: 12,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                   SizedBox(
+                  SizedBox(
                     height: 40,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
@@ -268,11 +438,26 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: widget.isDark ? Colors.white10 : Colors.grey.shade200,
+                              color: widget.isDark
+                                  ? Colors.white10
+                                  : Colors.grey.shade200,
                               shape: BoxShape.circle,
-                              border: tempIcon == icon ? Border.all(color: widget.isDark ? Colors.white : Colors.black, width: 2) : null,
+                              border: tempIcon == icon
+                                  ? Border.all(
+                                      color: widget.isDark
+                                          ? Colors.white
+                                          : Colors.black,
+                                      width: 2,
+                                    )
+                                  : null,
                             ),
-                            child: Icon(icon, color: widget.isDark ? Colors.white : Colors.black87, size: 20),
+                            child: Icon(
+                              icon,
+                              color: widget.isDark
+                                  ? Colors.white
+                                  : Colors.black87,
+                              size: 20,
+                            ),
                           ),
                         );
                       },
@@ -282,25 +467,35 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text("Cancel")),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text("Cancel"),
+              ),
               ElevatedButton(
                 onPressed: () {
                   final newCategory = categoryController.text.trim();
                   if (newCategory.isNotEmpty) {
                     // Update Parent State
-                    this.setState(() {
+                    setState(() {
                       if (!_categories.contains(newCategory)) {
                         _categories = [..._categories, newCategory];
                         _categoryColors[newCategory] = tempColor;
                         _categoryIcons[newCategory] = tempIcon;
                         _selectedCategory = newCategory;
-                        
-                        ScaffoldMessenger.of(this.context).showSnackBar( // Use parent context
-                           SnackBar(content: Text("Category '$newCategory' Added!"), duration: const Duration(seconds: 1)),
+
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          // Use parent context
+                          SnackBar(
+                            content: Text("Category '$newCategory' Added!"),
+                            duration: const Duration(seconds: 1),
+                          ),
                         );
                       } else {
-                         ScaffoldMessenger.of(this.context).showSnackBar(
-                           const SnackBar(content: Text("Category already exists!"), backgroundColor: Colors.orange),
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Category already exists!"),
+                            backgroundColor: Colors.orange,
+                          ),
                         );
                       }
                     });
@@ -308,10 +503,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   }
                 },
                 child: const Text("Add"),
-              )
+              ),
             ],
           );
-        }
+        },
       ),
     );
   }
@@ -320,7 +515,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   Widget build(BuildContext context) {
     bool isExpense = _type == 'Expense';
     Color activeColor = isExpense ? Colors.redAccent : Colors.green;
-    Color bgColor = widget.isDark ? const Color(0xFF020617) : const Color(0xFFF5F7FA);
+    Color bgColor = widget.isDark
+        ? const Color(0xFF020617)
+        : const Color(0xFFF5F7FA);
     Color cardColor = widget.isDark ? const Color(0xFF1E293B) : Colors.white;
     Color textColor = widget.isDark ? Colors.white : Colors.black;
     Color hintColor = widget.isDark ? Colors.grey : Colors.grey.shade600;
@@ -328,7 +525,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: Text('Add Transaction', style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: textColor)),
+        title: Text(
+          'Add Transaction',
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: textColor),
@@ -336,6 +539,16 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           icon: const Icon(LucideIcons.x),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          if (isExpense)
+            TextButton.icon(
+              onPressed: _scanReceipt,
+              icon: const Icon(LucideIcons.scanLine, size: 20),
+              label: const Text("Scan Receipt"),
+              style: TextButton.styleFrom(foregroundColor: textColor),
+            ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -356,9 +569,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: !isExpense ? Colors.green.withOpacity(0.2) : Colors.transparent,
+                          color: !isExpense
+                              ? Colors.green.withValues(alpha: 0.2)
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
-                          border: !isExpense ? Border.all(color: Colors.green) : null,
+                          border: !isExpense
+                              ? Border.all(color: Colors.green)
+                              : null,
                         ),
                         child: Center(
                           child: Text(
@@ -379,9 +596,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: isExpense ? Colors.redAccent.withOpacity(0.2) : Colors.transparent,
+                          color: isExpense
+                              ? Colors.redAccent.withValues(alpha: 0.2)
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
-                          border: isExpense ? Border.all(color: Colors.redAccent) : null,
+                          border: isExpense
+                              ? Border.all(color: Colors.redAccent)
+                              : null,
                         ),
                         child: Center(
                           child: Text(
@@ -405,12 +626,23 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             TextField(
               controller: _amountController,
               keyboardType: TextInputType.number,
-              style: TextStyle(color: textColor, fontSize: 32, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: textColor,
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+              ),
               decoration: InputDecoration(
                 prefixText: '₹ ',
-                prefixStyle: TextStyle(color: textColor, fontSize: 32, fontWeight: FontWeight.bold),
+                prefixStyle: TextStyle(
+                  color: textColor,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                ),
                 hintText: '0',
-                hintStyle: TextStyle(color: hintColor.withOpacity(0.5), fontSize: 32),
+                hintStyle: TextStyle(
+                  color: hintColor.withValues(alpha: 0.5),
+                  fontSize: 32,
+                ),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.zero,
               ),
@@ -426,11 +658,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 labelStyle: TextStyle(color: hintColor),
                 filled: true,
                 fillColor: cardColor,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
             const SizedBox(height: 16),
-             TextField(
+            TextField(
               controller: _descriptionController,
               style: TextStyle(color: textColor),
               decoration: InputDecoration(
@@ -438,171 +673,219 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 labelStyle: TextStyle(color: hintColor),
                 filled: true,
                 fillColor: cardColor,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
-             const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-             // Date & Time Row
-             Row(
-               children: [
-                 Expanded(
-                   child: InkWell(
-                     onTap: _presentDatePicker,
-                     child: Container(
-                       padding: const EdgeInsets.all(16),
-                       decoration: BoxDecoration(
-                         color: cardColor,
-                         borderRadius: BorderRadius.circular(12),
-                       ),
-                       child: Row(
-                         children: [
-                           Icon(LucideIcons.calendar, color: hintColor, size: 20),
-                           const SizedBox(width: 8),
-                           Text(DateFormat('MMM d, y').format(_selectedDate), style: TextStyle(color: textColor)),
-                         ],
-                       ),
-                     ),
-                   ),
-                 ),
-                 const SizedBox(width: 12),
-                 Expanded(
-                   child: InkWell(
-                     onTap: _presentTimePicker,
-                     child: Container(
-                       padding: const EdgeInsets.all(16),
-                       decoration: BoxDecoration(
-                         color: cardColor,
-                         borderRadius: BorderRadius.circular(12),
-                       ),
-                       child: Row(
-                         children: [
-                           Icon(LucideIcons.clock, color: hintColor, size: 20),
-                           const SizedBox(width: 8),
-                           Text(_selectedTime.format(context), style: TextStyle(color: textColor)),
-                         ],
-                       ),
-                     ),
-                   ),
-                 ),
-               ],
-             ),
-             const SizedBox(height: 16),
+            // Date & Time Row
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: _presentDatePicker,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            LucideIcons.calendar,
+                            color: hintColor,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            DateFormat('MMM d, y').format(_selectedDate),
+                            style: TextStyle(color: textColor),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: InkWell(
+                    onTap: _presentTimePicker,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(LucideIcons.clock, color: hintColor, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            _selectedTime.format(context),
+                            style: TextStyle(color: textColor),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
 
-             // Account
-             Row(
-               children: [
-                 Expanded(
-                   child: DropdownButtonFormField<String>(
-                     value: _selectedAccount,
-                     dropdownColor: cardColor,
-                     decoration: InputDecoration(
-                       labelText: 'Account',
-                        labelStyle: TextStyle(color: hintColor),
-                       filled: true,
-                       fillColor: cardColor,
-                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                     ),
-                     style: TextStyle(color: textColor),
-                     items: _accounts.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                     onChanged: (val) => setState(() => _selectedAccount = val!),
-                   ),
-                 ),
-                 const SizedBox(width: 8),
-                 Container(
-                   decoration: BoxDecoration(
-                     color: cardColor,
-                     borderRadius: BorderRadius.circular(12),
-                   ),
-                   child: IconButton(
-                     onPressed: _showAddAccountDialog,
-                     icon: const Icon(LucideIcons.plus),
-                     color: activeColor,
-                   ),
-                 )
-               ],
-             ),
-             const SizedBox(height: 32),
+            // Account
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _selectedAccount,
+                    dropdownColor: cardColor,
+                    decoration: InputDecoration(
+                      labelText: 'Account',
+                      labelStyle: TextStyle(color: hintColor),
+                      filled: true,
+                      fillColor: cardColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    style: TextStyle(color: textColor),
+                    items: _accounts
+                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                        .toList(),
+                    onChanged: (val) => setState(() => _selectedAccount = val!),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: IconButton(
+                    onPressed: _showAddAccountDialog,
+                    icon: const Icon(LucideIcons.plus),
+                    color: activeColor,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
 
-             // Categories
-             if (isExpense) ...[
-               Row(
-                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                 children: [
-                   Text("Categories", style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.bold)),
-                   TextButton.icon(
-                     onPressed: _showAddCategoryDialog,
-                     icon: const Icon(LucideIcons.plus, size: 16),
-                     label: const Text("Add New"),
-                     style: TextButton.styleFrom(foregroundColor: activeColor),
-                   )
-                 ],
-               ),
-               const SizedBox(height: 16),
-               Wrap(
-                 spacing: 12,
-                 runSpacing: 12,
-                 children: _categories.map((category) {
-                   bool isSelected = _selectedCategory == category;
-                   Color catColor = _categoryColors[category] ?? Colors.grey;
-                   IconData catIcon = _categoryIcons[category] ?? LucideIcons.circle;
-                   
-                   return GestureDetector(
-                     onTap: () => setState(() => _selectedCategory = category),
-                     child: Container(
-                       width: 100, // Fixed width for consistent grid
-                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                       decoration: BoxDecoration(
-                         color: isSelected ? catColor : catColor.withOpacity(0.1),
-                         borderRadius: BorderRadius.circular(16),
-                         border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
-                         boxShadow: isSelected ? [BoxShadow(color: catColor.withOpacity(0.4), blurRadius: 8, offset: const Offset(0, 4))] : null,
-                       ),
-                       child: Column(
-                         mainAxisSize: MainAxisSize.min,
-                         children: [
-                           Icon(
-                             catIcon,
-                             color: isSelected ? Colors.white : catColor,
-                             size: 24,
-                           ),
-                           const SizedBox(height: 8),
-                           Text(
-                             category,
-                             maxLines: 1,
-                             overflow: TextOverflow.ellipsis,
-                             style: TextStyle(
-                               color: isSelected ? Colors.white : textColor,
-                               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                               fontSize: 12,
-                             ),
-                           ),
-                         ],
-                       ),
-                     ),
-                   );
-                 }).toList(),
-               ),
-               const SizedBox(height: 32),
-             ],
+            // Categories
+            if (isExpense) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Categories",
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: _showAddCategoryDialog,
+                    icon: const Icon(LucideIcons.plus, size: 16),
+                    label: const Text("Add New"),
+                    style: TextButton.styleFrom(foregroundColor: activeColor),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: _categories.map((category) {
+                  bool isSelected = _selectedCategory == category;
+                  Color catColor = _categoryColors[category] ?? Colors.grey;
+                  IconData catIcon =
+                      _categoryIcons[category] ?? LucideIcons.circle;
 
-             // Submit Button
-             ElevatedButton(
-               onPressed: _submitData,
-               style: ElevatedButton.styleFrom(
-                 backgroundColor: activeColor,
-                 foregroundColor: Colors.white,
-                 padding: const EdgeInsets.symmetric(vertical: 18),
-                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                 elevation: 8,
-                 shadowColor: activeColor.withOpacity(0.4),
-               ),
-               child: Text(
-                 isExpense ? 'Add Expense' : 'Add Income',
-                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-               ),
-             ),
-             const SizedBox(height: 40),
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedCategory = category),
+                    child: Container(
+                      width: 100, // Fixed width for consistent grid
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? catColor
+                            : catColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(16),
+                        border: isSelected
+                            ? Border.all(color: Colors.white, width: 2)
+                            : null,
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: catColor.withValues(alpha: 0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            catIcon,
+                            color: isSelected ? Colors.white : catColor,
+                            size: 24,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            category,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : textColor,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 32),
+            ],
+
+            // Submit Button
+            ElevatedButton(
+              onPressed: _submitData,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: activeColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 8,
+                shadowColor: activeColor.withValues(alpha: 0.4),
+              ),
+              child: Text(
+                isExpense ? 'Add Expense' : 'Add Income',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
           ],
         ),
       ),

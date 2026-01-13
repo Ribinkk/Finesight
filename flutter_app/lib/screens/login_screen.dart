@@ -27,7 +27,7 @@ class LoginScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(),
-              
+
               // Programmatic Finesight AI Logo
               Column(
                 mainAxisSize: MainAxisSize.min,
@@ -42,20 +42,30 @@ class LoginScreen extends StatelessWidget {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            _buildBar(height: 24, color: const Color(0xFF4A90E2)), // Medium Blue
+                            _buildBar(
+                              height: 24,
+                              color: const Color(0xFF4A90E2),
+                            ), // Medium Blue
                             const SizedBox(width: 4),
-                            _buildBar(height: 32, color: const Color(0xFF50E3C2)), // Cyan/Teal
+                            _buildBar(
+                              height: 32,
+                              color: const Color(0xFF50E3C2),
+                            ), // Cyan/Teal
                             const SizedBox(width: 4),
-                            _buildBar(height: 40, color: const Color(0xFF009B6E)), // Green/Teal
+                            _buildBar(
+                              height: 40,
+                              color: const Color(0xFF009B6E),
+                            ), // Green/Teal
                           ],
                         ),
                       ),
                       const SizedBox(width: 16),
-                      
+
                       // Text: Finesight AI
                       RichText(
                         text: TextSpan(
-                          style: GoogleFonts.outfit( // Using Outfit or Inter for modern look
+                          style: GoogleFonts.outfit(
+                            // Using Outfit or Inter for modern look
                             fontSize: 42,
                             fontWeight: FontWeight.bold,
                             height: 1.0,
@@ -68,7 +78,7 @@ class LoginScreen extends StatelessWidget {
                             TextSpan(
                               text: 'AI',
                               // User requested Yellow for AI
-                              style: TextStyle(color: Color(0xFFFFD700)), 
+                              style: TextStyle(color: Color(0xFFFFD700)),
                             ),
                           ],
                         ),
@@ -86,12 +96,14 @@ class LoginScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               const Spacer(),
 
               // Login Buttons
               isLoading
-                  ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                  ? const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    )
                   : Column(
                       children: [
                         ElevatedButton(
@@ -154,10 +166,7 @@ class LoginScreen extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
-          colors: [
-            color.withOpacity(0.6),
-            color,
-          ],
+          colors: [color.withValues(alpha: 0.6), color],
         ),
       ),
     );

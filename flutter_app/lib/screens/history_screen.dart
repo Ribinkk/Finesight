@@ -20,7 +20,7 @@ class HistoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final combinedTransactions = _buildCombinedTransactions();
-    
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -34,7 +34,9 @@ class HistoryScreen extends StatelessWidget {
                     Icon(
                       LucideIcons.fileText,
                       size: 64,
-                      color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                      color: isDark
+                          ? Colors.grey.shade700
+                          : Colors.grey.shade300,
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -49,7 +51,9 @@ class HistoryScreen extends StatelessWidget {
                       'Your transactions will appear here',
                       style: GoogleFonts.inter(
                         fontSize: 14,
-                        color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+                        color: isDark
+                            ? Colors.grey.shade600
+                            : Colors.grey.shade400,
                       ),
                     ),
                   ],
@@ -86,12 +90,12 @@ class HistoryScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Transactions List
                   ...combinedTransactions.map((transaction) {
                     return _buildTransactionCard(transaction);
-                  }).toList(),
-                  
+                  }),
+
                   const SizedBox(height: 80), // Bottom padding for nav bar
                 ],
               ),
@@ -101,7 +105,7 @@ class HistoryScreen extends StatelessWidget {
 
   List<Map<String, dynamic>> _buildCombinedTransactions() {
     final List<Map<String, dynamic>> combinedTransactions = [];
-    
+
     // Add expenses
     for (var expense in expenses) {
       combinedTransactions.add({
@@ -116,7 +120,7 @@ class HistoryScreen extends StatelessWidget {
         'color': _getCategoryColor(expense.category),
       });
     }
-    
+
     // Add payments
     for (var payment in payments) {
       combinedTransactions.add({
@@ -127,14 +131,18 @@ class HistoryScreen extends StatelessWidget {
         'amount': payment.amount,
         'description': payment.razorpayOrderId ?? '',
         'paymentMethod': 'Razorpay',
-        'icon': payment.status == 'success' ? LucideIcons.checkCircle : LucideIcons.xCircle,
+        'icon': payment.status == 'success'
+            ? LucideIcons.checkCircle
+            : LucideIcons.xCircle,
         'color': payment.status == 'success' ? Colors.green : Colors.red,
       });
     }
-    
+
     // Sort by date (newest first)
-    combinedTransactions.sort((a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime));
-    
+    combinedTransactions.sort(
+      (a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime),
+    );
+
     return combinedTransactions;
   }
 
@@ -148,21 +156,29 @@ class HistoryScreen extends StatelessWidget {
     final color = transaction['color'] as Color;
     final description = transaction['description'] as String?;
     final paymentMethod = transaction['paymentMethod'] as String?;
-    
-    final currencyFormatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
-    
+
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '₹',
+      decimalDigits: 0,
+    );
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark 
-              ? (isExpense ? Colors.red.shade900.withOpacity(0.2) : Colors.green.shade900.withOpacity(0.2))
+          color: isDark
+              ? (isExpense
+                    ? Colors.red.shade900.withValues(alpha: 0.2)
+                    : Colors.green.shade900.withValues(alpha: 0.2))
               : (isExpense ? Colors.red.shade50 : Colors.green.shade50),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDark
-                ? (isExpense ? Colors.red.shade800.withOpacity(0.3) : Colors.green.shade800.withOpacity(0.3))
+                ? (isExpense
+                      ? Colors.red.shade800.withValues(alpha: 0.3)
+                      : Colors.green.shade800.withValues(alpha: 0.3))
                 : (isExpense ? Colors.red.shade100 : Colors.green.shade100),
             width: 1.5,
           ),
@@ -176,7 +192,7 @@ class HistoryScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.2),
+                    color: color.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(icon, color: color, size: 24),
@@ -200,11 +216,14 @@ class HistoryScreen extends StatelessWidget {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
-                              color: isExpense 
-                                  ? Colors.red.withOpacity(0.2)
-                                  : Colors.green.withOpacity(0.2),
+                              color: isExpense
+                                  ? Colors.red.withValues(alpha: 0.2)
+                                  : Colors.green.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -220,14 +239,18 @@ class HistoryScreen extends StatelessWidget {
                           Icon(
                             _getCategoryIcon(category),
                             size: 14,
-                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                            color: isDark
+                                ? Colors.grey.shade400
+                                : Colors.grey.shade600,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               category,
                               style: GoogleFonts.inter(
-                                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                                color: isDark
+                                    ? Colors.grey.shade400
+                                    : Colors.grey.shade600,
                                 fontSize: 13,
                               ),
                               overflow: TextOverflow.ellipsis,
@@ -254,7 +277,9 @@ class HistoryScreen extends StatelessWidget {
                     Text(
                       DateFormat('MMM d, y').format(date),
                       style: GoogleFonts.inter(
-                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                        color: isDark
+                            ? Colors.grey.shade400
+                            : Colors.grey.shade600,
                         fontSize: 12,
                       ),
                     ),
@@ -262,16 +287,16 @@ class HistoryScreen extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             // Additional details
             if (description != null && description.isNotEmpty) ...[
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: isDark 
-                      ? Colors.white.withOpacity(0.05)
-                      : Colors.black.withOpacity(0.03),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -279,14 +304,18 @@ class HistoryScreen extends StatelessWidget {
                     Icon(
                       LucideIcons.fileText,
                       size: 14,
-                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                      color: isDark
+                          ? Colors.grey.shade400
+                          : Colors.grey.shade600,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         description,
                         style: GoogleFonts.inter(
-                          color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                          color: isDark
+                              ? Colors.grey.shade300
+                              : Colors.grey.shade700,
                           fontSize: 13,
                         ),
                       ),
@@ -295,7 +324,7 @@ class HistoryScreen extends StatelessWidget {
                 ),
               ),
             ],
-            
+
             if (paymentMethod != null && paymentMethod.isNotEmpty) ...[
               const SizedBox(height: 8),
               Row(
@@ -309,7 +338,9 @@ class HistoryScreen extends StatelessWidget {
                   Text(
                     paymentMethod,
                     style: GoogleFonts.inter(
-                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                      color: isDark
+                          ? Colors.grey.shade400
+                          : Colors.grey.shade600,
                       fontSize: 12,
                     ),
                   ),
@@ -324,38 +355,64 @@ class HistoryScreen extends StatelessWidget {
 
   IconData _getCategoryIcon(String category) {
     switch (category.toLowerCase()) {
-      case 'food': return LucideIcons.utensils;
-      case 'transport': return LucideIcons.bus;
-      case 'shopping': return LucideIcons.shoppingBag;
-      case 'bills': return LucideIcons.receipt;
-      case 'entertainment': return LucideIcons.film;
-      case 'health': return LucideIcons.heartPulse;
-      case 'education': return LucideIcons.graduationCap;
-      case 'groceries': return LucideIcons.shoppingCart;
-      case 'rent': return LucideIcons.home;
-      case 'utilities': return LucideIcons.zap;
-      case 'successful': return LucideIcons.checkCircle;
-      case 'failed': return LucideIcons.xCircle;
-      default: return LucideIcons.tag;
+      case 'food':
+        return LucideIcons.utensils;
+      case 'transport':
+        return LucideIcons.bus;
+      case 'shopping':
+        return LucideIcons.shoppingBag;
+      case 'bills':
+        return LucideIcons.receipt;
+      case 'entertainment':
+        return LucideIcons.film;
+      case 'health':
+        return LucideIcons.heartPulse;
+      case 'education':
+        return LucideIcons.graduationCap;
+      case 'groceries':
+        return LucideIcons.shoppingCart;
+      case 'rent':
+        return LucideIcons.home;
+      case 'utilities':
+        return LucideIcons.zap;
+      case 'successful':
+        return LucideIcons.checkCircle;
+      case 'failed':
+        return LucideIcons.xCircle;
+      default:
+        return LucideIcons.tag;
     }
   }
 
   Color _getCategoryColor(String category) {
     switch (category.toLowerCase()) {
-      case 'food': return Colors.orange;
-      case 'transport': return Colors.blue;
-      case 'shopping': return Colors.red;
-      case 'bills': return Colors.indigo;
-      case 'entertainment': return Colors.pink;
-      case 'health': return Colors.teal;
-      case 'education': return Colors.greenAccent;
-      case 'groceries': return Colors.green;
-      case 'rent': return Colors.brown;
-      case 'utilities': return Colors.teal;
-      case 'travel': return Colors.lightBlue;
-      case 'investments': return Colors.cyan;
-      case 'other': return Colors.grey;
-      default: 
+      case 'food':
+        return Colors.orange;
+      case 'transport':
+        return Colors.blue;
+      case 'shopping':
+        return Colors.red;
+      case 'bills':
+        return Colors.indigo;
+      case 'entertainment':
+        return Colors.pink;
+      case 'health':
+        return Colors.teal;
+      case 'education':
+        return Colors.greenAccent;
+      case 'groceries':
+        return Colors.green;
+      case 'rent':
+        return Colors.brown;
+      case 'utilities':
+        return Colors.teal;
+      case 'travel':
+        return Colors.lightBlue;
+      case 'investments':
+        return Colors.cyan;
+      case 'other':
+        return Colors.grey;
+      default:
         return Colors.primaries[category.hashCode % Colors.primaries.length];
     }
   }

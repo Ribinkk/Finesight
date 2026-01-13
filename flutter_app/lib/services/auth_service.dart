@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import '../models/user_model.dart';
 
 class AuthService {
@@ -37,8 +37,10 @@ class AuthService {
     try {
       if (kIsWeb) {
         GoogleAuthProvider googleProvider = GoogleAuthProvider();
-        UserCredential userCredential = await _firebaseAuth.signInWithPopup(googleProvider);
-        
+        UserCredential userCredential = await _firebaseAuth.signInWithPopup(
+          googleProvider,
+        );
+
         return UserModel(
           uid: userCredential.user!.uid,
           name: userCredential.user?.displayName ?? 'User',
@@ -49,14 +51,16 @@ class AuthService {
         final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
         if (googleUser == null) return null;
 
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
         final OAuthCredential credential = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         );
 
-        final UserCredential userCredential = await _firebaseAuth.signInWithCredential(credential);
-        
+        final UserCredential userCredential = await _firebaseAuth
+            .signInWithCredential(credential);
+
         return UserModel(
           uid: userCredential.user!.uid,
           name: userCredential.user?.displayName ?? 'User',
@@ -65,7 +69,7 @@ class AuthService {
         );
       }
     } catch (e) {
-      print('Google Sign-In Error: $e');
+      debugPrint('Google Sign-In Error: $e');
       rethrow;
     }
   }
@@ -75,13 +79,13 @@ class AuthService {
     try {
       final userCredential = await _firebaseAuth.signInAnonymously();
       return UserModel(
-          uid: userCredential.user!.uid,
-          name: 'Guest',
-          email: 'guest@finesight.app',
-          pictureUrl: null,
-        );
+        uid: userCredential.user!.uid,
+        name: 'Guest',
+        email: 'guest@finesight.app',
+        pictureUrl: null,
+      );
     } catch (e) {
-      print('Guest Login Error: $e');
+      debugPrint('Guest Login Error: $e');
       rethrow;
     }
   }
@@ -94,7 +98,7 @@ class AuthService {
       }
       await _firebaseAuth.signOut();
     } catch (e) {
-      print('Logout Error: $e');
+      debugPrint('Logout Error: $e');
       rethrow;
     }
   }

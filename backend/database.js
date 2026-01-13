@@ -65,6 +65,47 @@ function initSqliteDb() {
       description TEXT
     )`);
 
+    db.run(`CREATE TABLE IF NOT EXISTS budgets (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      category TEXT NOT NULL,
+      "limit" REAL NOT NULL,
+      month INTEGER NOT NULL,
+      year INTEGER NOT NULL
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS recurring_transactions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      amount REAL NOT NULL,
+      category TEXT NOT NULL,
+      frequency TEXT NOT NULL,
+      nextDate TEXT NOT NULL,
+      description TEXT,
+      isActive INTEGER DEFAULT 1
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS split_expenses (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      description TEXT NOT NULL,
+      totalAmount REAL NOT NULL,
+      payer TEXT NOT NULL,
+      splits TEXT NOT NULL,
+      date TEXT NOT NULL
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS goals (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      targetAmount REAL NOT NULL,
+      currentAmount REAL NOT NULL,
+      deadline TEXT NOT NULL,
+      color INTEGER NOT NULL
+    )`);
+
     // Create indexes for user_id
     db.run(`CREATE INDEX IF NOT EXISTS idx_expenses_user ON expenses(user_id)`);
     db.run(`CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id)`);
