@@ -1,0 +1,4 @@
+# Mark all JavaScript as vendored to exclude from GitHub language stats
+*.js linguist-vendored
+backend/** linguist-vendored
+flutter_app/build/** linguist-vendored
