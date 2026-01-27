@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
 import 'package:intl/intl.dart';
 import '../models/recurring_transaction.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
+import '../data/subscription_data.dart'; // Import new data
 
 class RecurringScreen extends StatefulWidget {
   final UserModel? user;
@@ -110,6 +112,189 @@ class _RecurringScreenState extends State<RecurringScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Quick Select Logos
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: SubscriptionData.services.map((service) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 12, bottom: 16),
+                          child: InkWell(
+                            onTap: () {
+                              // Show Plan Selection for this service
+                              showDialog(
+                                context: context,
+                                builder: (innerContext) => AlertDialog(
+                                  backgroundColor: widget.isDark
+                                      ? const Color(0xFF1E293B)
+                                      : Colors.white,
+                                  title: Text(
+                                    'Select ${service.name} Plan',
+                                    style: TextStyle(
+                                      color: widget.isDark
+                                          ? Colors.white
+                                          : Colors.black,
+                                    ),
+                                  ),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: service.plans
+                                        .map(
+                                          (plan) => ListTile(
+                                            title: Text(
+                                              plan.name,
+                                              style: TextStyle(
+                                                color: widget.isDark
+                                                    ? Colors.white
+                                                    : Colors.black,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            subtitle: Text(
+                                              '${plan.description} - ₹${plan.price}',
+                                              style: TextStyle(
+                                                color: widget.isDark
+                                                    ? Colors.grey
+                                                    : Colors.grey[600],
+                                              ),
+                                            ),
+                                            onTap: () {
+                                              setDialogState(() {
+                                                titleController.text =
+                                                    service.name;
+                                                amountController.text = plan
+                                                    .price
+                                                    .toString();
+                                                selectedFrequency =
+                                                    plan.frequency;
+                                                selectedCategory =
+                                                    'Entertainment'; // Default for subs
+                                              });
+                                              Navigator.pop(innerContext);
+                                            },
+                                          ),
+                                        )
+                                        .toList(),
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: service.color.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  padding: const EdgeInsets.all(8),
+                                  child: service.logoUrl.endsWith('.svg')
+                                      ? (service.logoUrl.startsWith('http')
+                                            ? SvgPicture.network(
+                                                service.logoUrl,
+                                                width: 32,
+                                                height: 32,
+                                                placeholderBuilder:
+                                                    (
+                                                      BuildContext context,
+                                                    ) => Center(
+                                                      child: Text(
+                                                        service.name[0],
+                                                        style:
+                                                            GoogleFonts.outfit(
+                                                              fontSize: 20,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color:
+                                                                  service.color,
+                                                            ),
+                                                      ),
+                                                    ),
+                                              )
+                                            : SvgPicture.asset(
+                                                service.logoUrl,
+                                                width: 32,
+                                                height: 32,
+                                              ))
+                                      : (service.logoUrl.startsWith('http')
+                                            ? Image.network(
+                                                service.logoUrl,
+                                                errorBuilder:
+                                                    (
+                                                      context,
+                                                      error,
+                                                      stackTrace,
+                                                    ) {
+                                                      return Center(
+                                                        child: Text(
+                                                          service.name[0],
+                                                          style:
+                                                              GoogleFonts.outfit(
+                                                                fontSize: 20,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                color: service
+                                                                    .color,
+                                                              ),
+                                                        ),
+                                                      );
+                                                    },
+                                              )
+                                            : Image.asset(
+                                                service.logoUrl,
+                                                errorBuilder:
+                                                    (
+                                                      context,
+                                                      error,
+                                                      stackTrace,
+                                                    ) {
+                                                      return Center(
+                                                        child: Text(
+                                                          service.name[0],
+                                                          style:
+                                                              GoogleFonts.outfit(
+                                                                fontSize: 20,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                color: service
+                                                                    .color,
+                                                              ),
+                                                        ),
+                                                      );
+                                                    },
+                                              )),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  service.name,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
+                                    color: widget.isDark
+                                        ? Colors.white70
+                                        : Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const Divider(),
+                  const SizedBox(height: 8),
+
                   TextField(
                     controller: titleController,
                     decoration: InputDecoration(
@@ -357,176 +542,347 @@ class _RecurringScreenState extends State<RecurringScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _transactions.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    LucideIcons.repeat,
-                    size: 64,
-                    color: widget.isDark
-                        ? Colors.white10
-                        : Colors.grey.shade300,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No subscriptions yet',
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      color: widget.isDark
-                          ? Colors.white54
-                          : Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Track your monthly bills automatically',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: widget.isDark
-                          ? Colors.white24
-                          : Colors.grey.shade400,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _transactions.length,
-              itemBuilder: (context, index) {
-                final item = _transactions[index];
-                final daysLeft = item.nextDate
-                    .difference(DateTime.now())
-                    .inDays;
-
-                return Dismissible(
-                  key: Key(item.id),
-                  direction: DismissDirection.endToStart,
-                  onDismissed: (_) => _deleteTransaction(item.id),
-                  background: Container(
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 20),
-                    margin: const EdgeInsets.only(bottom: 12),
+          : Column(
+              children: [
+                if (_transactions.isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(16),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF009B6E), Color(0xFF00C853)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF009B6E).withValues(alpha: 0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
-                    child: const Icon(LucideIcons.trash2, color: Colors.white),
-                  ),
-                  child:
-                      Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            color: widget.isDark
-                                ? const Color(0xFF1E293B)
-                                : Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(
-                                color: widget.isDark
-                                    ? Colors.transparent
-                                    : Colors.grey.shade200,
+                    child: Column(
+                      children: [
+                        Text(
+                          'Total Monthly Cost',
+                          style: GoogleFonts.inter(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '₹${_transactions.fold(0.0, (sum, t) {
+                            switch (t.frequency) {
+                              case 'Daily':
+                                return sum + (t.amount * 30);
+                              case 'Weekly':
+                                return sum + (t.amount * 4);
+                              case 'Yearly':
+                                return sum + (t.amount / 12);
+                              default:
+                                return sum + t.amount;
+                            }
+                          }).toStringAsFixed(0)}',
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 36,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
                               ),
-                            ),
-                            elevation: 0,
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.all(16),
-                              leading: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFF009B6E,
-                                  ).withValues(alpha: 0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  LucideIcons.refreshCw,
-                                  color: Color(0xFF009B6E),
-                                ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(20),
                               ),
-                              title: Text(
-                                item.title,
-                                style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: widget.isDark
-                                      ? Colors.white
-                                      : Colors.black,
-                                ),
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Row(
                                 children: [
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${item.frequency} • ${item.category}',
-                                    style: TextStyle(
-                                      color: widget.isDark
-                                          ? Colors.white54
-                                          : Colors.grey.shade500,
-                                    ),
+                                  const Icon(
+                                    LucideIcons.calendar,
+                                    color: Colors.white,
+                                    size: 14,
                                   ),
-                                  const SizedBox(height: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: daysLeft <= 3
-                                          ? Colors.red.withValues(alpha: 0.1)
-                                          : Colors.blue.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      daysLeft < 0
-                                          ? 'Overdue'
-                                          : (daysLeft == 0
-                                                ? 'Due Today'
-                                                : '$daysLeft days left'),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: daysLeft <= 3
-                                            ? Colors.red
-                                            : Colors.blue,
-                                      ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${_transactions.length} Active Subscriptions',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ],
                               ),
-                              trailing: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    '₹${item.amount.toStringAsFixed(0)}',
-                                    style: GoogleFonts.outfit(
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                Expanded(
+                  child: _transactions.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                LucideIcons.repeat,
+                                size: 64,
+                                color: widget.isDark
+                                    ? Colors.white10
+                                    : Colors.grey.shade300,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No subscriptions yet',
+                                style: GoogleFonts.inter(
+                                  fontSize: 18,
+                                  color: widget.isDark
+                                      ? Colors.white54
+                                      : Colors.grey.shade600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Track your monthly bills automatically',
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  color: widget.isDark
+                                      ? Colors.white24
+                                      : Colors.grey.shade400,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          itemCount: _transactions.length,
+                          itemBuilder: (context, index) {
+                            final item = _transactions[index];
+                            final daysLeft = item.nextDate
+                                .difference(DateTime.now())
+                                .inDays;
+
+                            return Dismissible(
+                              key: Key(item.id),
+                              direction: DismissDirection.endToStart,
+                              onDismissed: (_) => _deleteTransaction(item.id),
+                              background: Container(
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 20),
+                                margin: const EdgeInsets.only(bottom: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: const Icon(
+                                  LucideIcons.trash2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              child: Card(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                color: widget.isDark
+                                    ? const Color(0xFF1E293B)
+                                    : Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  side: BorderSide(
+                                    color: widget.isDark
+                                        ? Colors.transparent
+                                        : Colors.grey.shade200,
+                                  ),
+                                ),
+                                elevation: 0,
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.all(16),
+                                  leading: Container(
+                                    width: 48,
+                                    height: 48,
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: SubscriptionData.getColor(
+                                          item.title,
+                                        ).withValues(alpha: 0.2),
+                                      ),
+                                    ),
+                                    child: Builder(
+                                      builder: (context) {
+                                        final logoUrl =
+                                            SubscriptionData.getLogoUrl(
+                                              item.title,
+                                            );
+                                        if (logoUrl != null) {
+                                          if (logoUrl.endsWith('.svg')) {
+                                            return logoUrl.startsWith('http')
+                                                ? SvgPicture.network(
+                                                    logoUrl,
+                                                    width: 32,
+                                                    height: 32,
+                                                    placeholderBuilder:
+                                                        (
+                                                          BuildContext context,
+                                                        ) => Icon(
+                                                          LucideIcons.refreshCw,
+                                                          color:
+                                                              SubscriptionData.getColor(
+                                                                item.title,
+                                                              ),
+                                                        ),
+                                                  )
+                                                : SvgPicture.asset(
+                                                    logoUrl,
+                                                    width: 32,
+                                                    height: 32,
+                                                  );
+                                          }
+                                          return logoUrl.startsWith('http')
+                                              ? Image.network(
+                                                  logoUrl,
+                                                  errorBuilder:
+                                                      (
+                                                        context,
+                                                        error,
+                                                        stackTrace,
+                                                      ) => Icon(
+                                                        LucideIcons.refreshCw,
+                                                        color:
+                                                            SubscriptionData.getColor(
+                                                              item.title,
+                                                            ),
+                                                      ),
+                                                )
+                                              : Image.asset(
+                                                  logoUrl,
+                                                  errorBuilder:
+                                                      (
+                                                        context,
+                                                        error,
+                                                        stackTrace,
+                                                      ) => Icon(
+                                                        LucideIcons.refreshCw,
+                                                        color:
+                                                            SubscriptionData.getColor(
+                                                              item.title,
+                                                            ),
+                                                      ),
+                                                );
+                                        }
+                                        return Icon(
+                                          LucideIcons.refreshCw,
+                                          color: SubscriptionData.getColor(
+                                            item.title,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  title: Text(
+                                    item.title,
+                                    style: GoogleFonts.inter(
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 18,
+                                      fontSize: 16,
                                       color: widget.isDark
                                           ? Colors.white
                                           : Colors.black,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  const Icon(
-                                    LucideIcons.chevronRight,
-                                    size: 16,
-                                    color: Colors.grey,
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${item.frequency} • ${item.category}',
+                                        style: TextStyle(
+                                          color: widget.isDark
+                                              ? Colors.white54
+                                              : Colors.grey.shade500,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: daysLeft <= 3
+                                              ? Colors.red.withValues(
+                                                  alpha: 0.1,
+                                                )
+                                              : Colors.blue.withValues(
+                                                  alpha: 0.1,
+                                                ),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          daysLeft < 0
+                                              ? 'Overdue'
+                                              : (daysLeft == 0
+                                                    ? 'Due Today'
+                                                    : '$daysLeft days left'),
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: daysLeft <= 3
+                                                ? Colors.red
+                                                : Colors.blue,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                  trailing: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        '₹${item.amount.toStringAsFixed(0)}',
+                                        style: GoogleFonts.outfit(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: widget.isDark
+                                              ? Colors.white
+                                              : Colors.black,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      const Icon(
+                                        LucideIcons.chevronRight,
+                                        size: 16,
+                                        color: Colors.grey,
+                                      ),
+                                    ],
+                                  ),
+                                  onTap: () =>
+                                      _showAddEditDialog(transaction: item),
+                                ),
                               ),
-                              onTap: () =>
-                                  _showAddEditDialog(transaction: item),
-                            ),
-                          )
-                          .animate()
-                          .fade(duration: 400.ms)
-                          .slideX(begin: 0.2, end: 0, delay: (100 * index).ms),
-                );
-              },
+                            );
+                          },
+                        ),
+                ),
+              ],
             ),
     );
   }
