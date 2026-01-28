@@ -1,14 +1,15 @@
 const mongoose = require('mongoose');
 
-const ExpenseSchema = new mongoose.Schema({
+const RecurringTransactionSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
   user_id: { type: String, required: true, index: true },
   title: { type: String, required: true },
   amount: { type: Number, required: true },
   category: { type: String, required: true },
-  date: { type: String, required: true, index: true }, // Keeping as String to match existing API expected format (ISO string)
-  paymentMethod: { type: String, required: true },
-  description: String
+  frequency: { type: String, required: true },
+  nextDate: { type: String, required: true },
+  description: String,
+  isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Expense', ExpenseSchema);
+module.exports = mongoose.model('RecurringTransaction', RecurringTransactionSchema);

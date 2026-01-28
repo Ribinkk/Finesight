@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class LoginScreen extends StatelessWidget {
   final VoidCallback onLogin;
@@ -15,158 +16,357 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dark background similar to the provided design
-    final backgroundColor = const Color(0xFF0F1218);
-
+    // Premium dark gradient background
     return Scaffold(
-      backgroundColor: backgroundColor,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF0F172A), // Slate 900
+              Color(0xFF020617), // Slate 950
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(),
 
-              // Programmatic Finesight AI Logo
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Custom Icon: 3 Bars
-                      SizedBox(
-                        height: 40,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            _buildBar(
-                              height: 24,
-                              color: const Color(0xFF4A90E2),
-                            ), // Medium Blue
-                            const SizedBox(width: 4),
-                            _buildBar(
-                              height: 32,
-                              color: const Color(0xFF50E3C2),
-                            ), // Cyan/Teal
-                            const SizedBox(width: 4),
-                            _buildBar(
-                              height: 40,
-                              color: const Color(0xFF009B6E),
-                            ), // Green/Teal
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-
-                      // Text: Finesight AI
-                      RichText(
-                        text: TextSpan(
-                          style: GoogleFonts.outfit(
-                            // Using Outfit or Inter for modern look
-                            fontSize: 42,
-                            fontWeight: FontWeight.bold,
-                            height: 1.0,
-                          ),
-                          children: [
-                            const TextSpan(
-                              text: 'Finesight ',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            TextSpan(
-                              text: 'AI',
-                              // User requested Yellow for AI
-                              style: TextStyle(color: Color(0xFFFFD700)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Understand your spending',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      color: Colors.white70,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-
-              const Spacer(),
-
-              // Login Buttons
-              isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
-                    )
-                  : Column(
-                      children: [
-                        ElevatedButton(
-                          onPressed: onLogin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            minimumSize: const Size(double.infinity, 56),
-                            elevation: 0,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                // Animated Robot & Branding Section
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Custom Procedural "AI Bot" Animation
+                    SizedBox(
+                          height: 120,
+                          width: 120,
+                          child: Stack(
+                            alignment: Alignment.center,
                             children: [
-                              const Icon(Icons.login),
-                              const SizedBox(width: 12),
-                              Text(
-                                'Sign in with Google',
-                                style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
+                              // Glow behind
+                              Container(
+                                    width: 80,
+                                    height: 80,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.blue.withValues(alpha: 0.2),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Colors.blueAccent,
+                                          blurRadius: 40,
+                                          spreadRadius: 10,
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                  .animate(
+                                    onPlay: (c) => c.repeat(reverse: true),
+                                  )
+                                  .scale(
+                                    begin: const Offset(0.8, 0.8),
+                                    end: const Offset(1.2, 1.2),
+                                    duration: 2.seconds,
+                                  ),
+
+                              // Robot Head
+                              Container(
+                                width: 90,
+                                height: 65,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE2E8F0), // Slate 200
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                child: Stack(
+                                  children: [
+                                    // Antenna
+                                    Positioned(
+                                      top: -10,
+                                      left: 40, // Center-ish
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                                width: 6,
+                                                height: 6,
+                                                decoration: const BoxDecoration(
+                                                  color: Colors.redAccent,
+                                                  shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.red,
+                                                      blurRadius: 5,
+                                                    ),
+                                                  ],
+                                                ),
+                                              )
+                                              .animate(
+                                                onPlay: (c) =>
+                                                    c.repeat(reverse: true),
+                                              )
+                                              .fade(
+                                                begin: 0.4,
+                                                end: 1.0,
+                                                duration: 1.seconds,
+                                              ),
+                                          Container(
+                                            width: 2,
+                                            height: 10,
+                                            color: Colors.grey.shade400,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    // Face Screen
+                                    Center(
+                                      child: Container(
+                                        width: 70,
+                                        height: 40,
+                                        decoration: BoxDecoration(
+                                          color: const Color(
+                                            0xFF1E293B,
+                                          ), // Dark screen
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.grey.shade300,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            // Left Eye
+                                            Container(
+                                                  width: 18,
+                                                  height: 25,
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(
+                                                      0xFF00E5FF,
+                                                    ), // Cyan glow
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          50,
+                                                        ),
+                                                    boxShadow: const [
+                                                      BoxShadow(
+                                                        color: Color(
+                                                          0xFF00E5FF,
+                                                        ),
+                                                        blurRadius: 8,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )
+                                                .animate(
+                                                  onPlay: (c) => c.repeat(),
+                                                )
+                                                .scaleY(
+                                                  begin: 1,
+                                                  end: 1,
+                                                  duration: 3.seconds,
+                                                )
+                                                .then()
+                                                .scaleY(
+                                                  begin: 1,
+                                                  end: 0.1,
+                                                  duration: 100.ms,
+                                                  curve: Curves.easeInOut,
+                                                )
+                                                .then()
+                                                .scaleY(
+                                                  begin: 0.1,
+                                                  end: 1,
+                                                  duration: 100.ms,
+                                                  curve: Curves.easeInOut,
+                                                ),
+
+                                            // Right Eye
+                                            Container(
+                                                  width: 18,
+                                                  height: 25,
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(
+                                                      0xFF00E5FF,
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          50,
+                                                        ),
+                                                    boxShadow: const [
+                                                      BoxShadow(
+                                                        color: Color(
+                                                          0xFF00E5FF,
+                                                        ),
+                                                        blurRadius: 8,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                )
+                                                .animate(
+                                                  onPlay: (c) => c.repeat(),
+                                                )
+                                                .scaleY(
+                                                  begin: 1,
+                                                  end: 1,
+                                                  duration: 3.seconds,
+                                                )
+                                                .then()
+                                                .scaleY(
+                                                  begin: 1,
+                                                  end: 0.1,
+                                                  duration: 100.ms,
+                                                  curve: Curves.easeInOut,
+                                                )
+                                                .then()
+                                                .scaleY(
+                                                  begin: 0.1,
+                                                  end: 1,
+                                                  duration: 100.ms,
+                                                  curve: Curves.easeInOut,
+                                                ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
+                        )
+                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .moveY(
+                          begin: 0,
+                          end: -8,
+                          duration: 2.seconds,
+                          curve: Curves.easeInOut,
+                        ), // Float animation
+
+                    const SizedBox(height: 24),
+
+                    // Brand Name
+                    RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: GoogleFonts.outfit(
+                          fontSize: 42,
+                          fontWeight: FontWeight.bold,
+                          height: 1.1,
+                          letterSpacing: -1.0,
                         ),
-                        const SizedBox(height: 16),
-                        TextButton(
-                          onPressed: onGuestLogin,
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.white54,
+                        children: [
+                          const TextSpan(
+                            text: 'Finesight ',
+                            style: TextStyle(color: Colors.white),
                           ),
-                          child: Text(
-                            'Continue as Guest',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                          TextSpan(
+                            text: 'AI',
+                            style: TextStyle(
+                              color: const Color(0xFFFFD700), // Gold/Yellow
+                              shadows: [
+                                Shadow(
+                                  blurRadius: 10,
+                                  color: Colors.yellow.withValues(alpha: 0.5),
+                                  offset: const Offset(0, 0),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+                        ],
+                      ),
+                    ).animate().fadeIn(duration: 800.ms).slideY(begin: 0.3),
 
-  Widget _buildBar({required double height, required Color color}) {
-    return Container(
-      width: 10,
-      height: height,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(50),
-        gradient: LinearGradient(
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-          colors: [color.withValues(alpha: 0.6), color],
+                    const SizedBox(height: 12),
+
+                    // Slogan
+                    Text(
+                      'Understand your spending.',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        color: Colors.grey.shade400,
+                        letterSpacing: 0.5,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.3),
+                  ],
+                ),
+
+                const Spacer(),
+
+                // Buttons Section
+                isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      )
+                    : Column(
+                        children: [
+                          ElevatedButton(
+                            onPressed: onLogin,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              minimumSize: const Size(double.infinity, 56),
+                              elevation: 4,
+                              shadowColor: Colors.white.withValues(alpha: 0.1),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.g_mobiledata,
+                                  size: 28,
+                                  color: Colors.grey[800],
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Sign in with Google',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.5),
+                          const SizedBox(height: 20),
+                          TextButton(
+                            onPressed: onGuestLogin,
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.grey.shade400,
+                            ),
+                            child: Text(
+                              'Continue as Guest',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ).animate().fadeIn(delay: 800.ms),
+                        ],
+                      ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
         ),
       ),
     );

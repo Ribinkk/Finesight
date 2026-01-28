@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../models/debt.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import '../models/expense.dart';
 import '../models/payment.dart';
@@ -10,6 +11,11 @@ import '../models/split_expense.dart';
 import '../models/goal.dart';
 
 class ApiService {
+  // NOTE: Change this IP to your computer's IP address if running on a physical device.
+  // Use http://10.0.2.2:3001/api for Android Emulator.
+  // Use http://localhost:3001/api for iOS Simulator.
+  static const String _defaultLocalUrl = 'http://10.0.2.2:3001/api';
+
   // Platform-specific base URL
   static String get baseUrl {
     if (kIsWeb) {
@@ -18,7 +24,10 @@ class ApiService {
       }
       return 'http://localhost:3001/api';
     } else {
-      return 'http://192.168.16.158:3001/api';
+      return const String.fromEnvironment(
+        'API_URL',
+        defaultValue: _defaultLocalUrl,
+      );
     }
   }
 
@@ -38,7 +47,7 @@ class ApiService {
             amount: (json['amount'] as num).toDouble(),
             category: json['category'],
             date: DateTime.parse(json['date']),
-            paymentMethod: json['paymentMethod'],
+            paymentMethod: json['paymentMethod'] ?? 'Cash',
             description: json['description'],
           );
         }).toList();
@@ -464,6 +473,110 @@ class ApiService {
       }
     } catch (e) {
       rethrow;
+    }
+  }
+
+  // --- Debts ---
+  static Future<List<Debt>> getDebts(String userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/debts?user_id=$userId'),
+      );
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        final List<dynamic> rows = data['data'];
+        return rows.map((json) => Debt.fromMap(json)).toList();
+      } else {
+        throw Exception('Failed to load debts');
+      }
+    } catch (e) {
+      debugPrint('Error fetching debts: $e');
+      return [];
+    }
+  }
+
+  static Future<void> addDebt(Debt debt) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/debts'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(debt.toMap()),
+      );
+      if (response.statusCode != 200) throw Exception('Failed to add debt');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  static Future<void> updateDebt(Debt debt) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/debts/${debt.id}?user_id=${debt.userId}'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(debt.toMap()),
+      );
+      if (response.statusCode != 200) throw Exception('Failed to update debt');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteDebt(String id, String userId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/debts/$id?user_id=$userId'),
+      );
+      if (response.statusCode != 200) throw Exception('Failed to delete debt');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // --- AI Chat ---
+  static Future<String> chatWithAI(
+    String message,
+    List<Map<String, String>> context,
+    String userId,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/chat'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'message': message,
+          'context': context,
+          'user_id': userId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['reply'];
+      } else {
+        throw Exception('Failed to get response from AI');
+      }
+    } catch (e) {
+      debugPrint('Error chatting with AI: $e');
+      rethrow;
+    }
+  }
+
+  static Future<Map<String, dynamic>> scanReceipt(String base64Image) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/scan-receipt'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'imageBase64': base64Image}),
+      );
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        return body['data'];
+      }
+      return {};
+    } catch (e) {
+      debugPrint("Scan Error: $e");
+      return {};
     }
   }
 }

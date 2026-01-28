@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
-import '../models/user_model.dart';
+
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:provider/provider.dart';
+
+import '../models/user_model.dart';
+import '../providers/theme_provider.dart';
+import '../services/api_service.dart';
+import '../services/export_service.dart';
+
 import 'recurring_screen.dart';
 import 'split_screen.dart';
 import 'goals_screen.dart';
-import '../services/api_service.dart';
-import '../services/export_service.dart';
+import 'settings_screen.dart'; // Import SettingsScreen
 
 class ProfileScreen extends StatefulWidget {
   final UserModel? user;
   final VoidCallback onLogout;
-  final Function() onThemeToggle;
-  final bool isDark;
   final List<String> categories;
   final Function(String) onAddCategory;
 
@@ -19,8 +23,6 @@ class ProfileScreen extends StatefulWidget {
     super.key,
     required this.user,
     required this.onLogout,
-    required this.onThemeToggle,
-    required this.isDark,
     required this.categories,
     required this.onAddCategory,
   });
@@ -30,67 +32,25 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String _selectedCurrency = 'INR';
-
-  final List<String> _currencies = ['INR', 'USD', 'EUR', 'GBP', 'AUD', 'CAD'];
-
-  void _showCurrencyPicker() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
-        title: Text(
-          'Select Currency',
-          style: TextStyle(color: widget.isDark ? Colors.white : Colors.black),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: _currencies
-              .map(
-                (currency) => ListTile(
-                  title: Text(
-                    currency,
-                    style: TextStyle(
-                      color: widget.isDark ? Colors.white : Colors.black87,
-                    ),
-                  ),
-                  onTap: () {
-                    setState(() {
-                      _selectedCurrency = currency;
-                    });
-                    Navigator.of(ctx).pop();
-                  },
-                  trailing: _selectedCurrency == currency
-                      ? const Icon(
-                          LucideIcons.check,
-                          color: Colors.green,
-                          size: 20,
-                        )
-                      : null,
-                ),
-              )
-              .toList(),
-        ),
-      ),
-    );
-  }
+  // Currency is now handled in Settings (globally) or here if we want local override.
+  // For now, removing local currency state as it didn't do anything globally.
 
   void _showManageCategoriesDialog() {
     final categoryController = TextEditingController();
+    final isDark = Provider.of<ThemeProvider>(
+      context,
+      listen: false,
+    ).isDarkMode;
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            backgroundColor: widget.isDark
-                ? const Color(0xFF1E293B)
-                : Colors.white,
+            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
             title: Text(
               'Manage Categories',
-              style: TextStyle(
-                color: widget.isDark ? Colors.white : Colors.black,
-              ),
+              style: TextStyle(color: isDark ? Colors.white : Colors.black),
             ),
             content: SizedBox(
               width: double.maxFinite,
@@ -102,13 +62,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     decoration: InputDecoration(
                       labelText: 'New Category',
                       labelStyle: TextStyle(
-                        color: widget.isDark
-                            ? Colors.grey
-                            : Colors.grey.shade600,
+                        color: isDark ? Colors.grey : Colors.grey.shade600,
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderSide: BorderSide(
-                          color: widget.isDark
+                          color: isDark
                               ? Colors.grey.shade700
                               : Colors.grey.shade300,
                         ),
@@ -127,7 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     style: TextStyle(
-                      color: widget.isDark ? Colors.white : Colors.black,
+                      color: isDark ? Colors.white : Colors.black,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -142,12 +100,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 label: Text(
                                   cat,
                                   style: TextStyle(
-                                    color: widget.isDark
+                                    color: isDark
                                         ? Colors.white
                                         : Colors.black87,
                                   ),
                                 ),
-                                backgroundColor: widget.isDark
+                                backgroundColor: isDark
                                     ? Colors.green.shade900.withValues(
                                         alpha: 0.5,
                                       )
@@ -178,6 +136,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _showExportDialog() async {
+    final isDark = Provider.of<ThemeProvider>(
+      context,
+      listen: false,
+    ).isDarkMode;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -193,14 +156,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          backgroundColor: widget.isDark
-              ? const Color(0xFF1E293B)
-              : Colors.white,
+          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
           title: Text(
             'Export Data',
-            style: TextStyle(
-              color: widget.isDark ? Colors.white : Colors.black,
-            ),
+            style: TextStyle(color: isDark ? Colors.white : Colors.black),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -213,7 +172,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: Text(
                   'Export to CSV',
                   style: TextStyle(
-                    color: widget.isDark ? Colors.white : Colors.black87,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
                 onTap: () async {
@@ -233,7 +192,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: Text(
                   'Export to PDF',
                   style: TextStyle(
-                    color: widget.isDark ? Colors.white : Colors.black87,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
                 onTap: () async {
@@ -265,15 +224,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
     return Scaffold(
-      backgroundColor: widget.isDark
-          ? const Color(0xFF020617)
-          : Colors.green.shade50,
+      backgroundColor: isDark ? const Color(0xFF020617) : Colors.green.shade50,
       appBar: AppBar(
         title: const Text('Profile'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: widget.isDark ? Colors.white : Colors.black,
+        foregroundColor: isDark ? Colors.white : Colors.black,
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => SettingsScreen(user: widget.user),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -295,97 +268,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: widget.isDark ? Colors.white : Colors.black,
+                color: isDark ? Colors.white : Colors.black,
               ),
             ),
             Text(
               widget.user?.email ?? 'No email',
               style: TextStyle(
-                color: widget.isDark ? Colors.grey : Colors.grey.shade600,
+                color: isDark ? Colors.grey : Colors.grey.shade600,
               ),
             ),
             const SizedBox(height: 32),
 
-            // Settings Section
-            _buildSettingsTile(
-              context,
-              icon: widget.isDark ? LucideIcons.sun : LucideIcons.moon,
-              title: 'Dark Mode',
-              trailing: Switch(
-                value: widget.isDark,
-                onChanged: (_) => widget.onThemeToggle(),
-                activeThumbColor: Colors.green,
-              ),
-            ),
-            _buildSettingsTile(
-              context,
-              icon: LucideIcons.bell,
-              title: 'Notifications',
-              trailing: Switch(
-                value: true,
-                onChanged: (val) {},
-                activeThumbColor: Colors.green,
-              ),
-            ),
+            // Feature Section
             _buildSettingsTile(
               context,
               icon: LucideIcons.repeat,
               title: 'Subscriptions',
+              isDark: isDark,
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => RecurringScreen(
                     user: widget.user,
-                    isDark: widget.isDark,
+                    isDark: isDark,
                     categories: widget.categories,
                   ),
                 ),
               ),
             ),
-            _buildSettingsTile(
-              context,
-              icon: LucideIcons.currency,
-              title: 'Currency',
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _selectedCurrency,
-                    style: TextStyle(
-                      color: widget.isDark ? Colors.grey : Colors.grey.shade600,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Icon(
-                    LucideIcons.chevronRight,
-                    size: 20,
-                    color: widget.isDark ? Colors.grey : Colors.grey.shade400,
-                  ),
-                ],
-              ),
-              onTap: _showCurrencyPicker,
-            ),
+            // Moved Currency to SettingsScreen (Conceptually)
+            // Keeping "Manage Categories" here as it's content-related?
+            // Or maybe move to settings. Let's keep here for now as "Content Management"
             _buildSettingsTile(
               context,
               icon: LucideIcons.list,
               title: 'Manage Categories',
+              isDark: isDark,
               onTap: _showManageCategoriesDialog,
             ),
             _buildSettingsTile(
               context,
               icon: LucideIcons.download,
               title: 'Export Data',
+              isDark: isDark,
               onTap: _showExportDialog,
             ),
             _buildSettingsTile(
               context,
               icon: LucideIcons.users,
               title: 'Split Expenses',
+              isDark: isDark,
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) =>
-                      SplitScreen(user: widget.user, isDark: widget.isDark),
+                      SplitScreen(user: widget.user, isDark: isDark),
                 ),
               ),
             ),
@@ -393,19 +330,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
               context,
               icon: LucideIcons.target,
               title: 'Savings Goals',
+              isDark: isDark,
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) =>
-                      GoalsScreen(user: widget.user, isDark: widget.isDark),
+                      GoalsScreen(user: widget.user, isDark: isDark),
                 ),
               ),
             ),
+
+            // Settings Shortcut
             _buildSettingsTile(
               context,
-              icon: LucideIcons.helpCircle,
-              title: 'Help & Support',
+              icon: LucideIcons.settings,
+              title: 'App Settings',
+              isDark: isDark,
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'New',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => SettingsScreen(user: widget.user),
+                ),
+              ),
             ),
+
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () {
@@ -431,17 +394,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     BuildContext context, {
     required IconData icon,
     required String title,
+    required bool isDark,
     Widget? trailing,
     VoidCallback? onTap,
   }) {
+    final primaryColor = Theme.of(context).primaryColor;
     return Card(
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 12),
-      color: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
+      color: isDark ? const Color(0xFF1E293B) : Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: widget.isDark ? Colors.transparent : Colors.grey.shade200,
+          color: isDark ? Colors.transparent : Colors.grey.shade200,
         ),
       ),
       child: ListTile(
@@ -449,16 +414,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.green.withValues(alpha: 0.1),
+            color: primaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: Colors.green),
+          child: Icon(icon, color: primaryColor),
         ),
         title: Text(
           title,
           style: TextStyle(
             fontWeight: FontWeight.w500,
-            color: widget.isDark ? Colors.white : Colors.black,
+            color: isDark ? Colors.white : Colors.black,
           ),
         ),
         trailing:
@@ -466,7 +431,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Icon(
               LucideIcons.chevronRight,
               size: 20,
-              color: widget.isDark ? Colors.grey : Colors.grey.shade400,
+              color: isDark ? Colors.grey : Colors.grey.shade400,
             ),
       ),
     );

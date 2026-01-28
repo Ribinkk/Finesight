@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../services/api_service.dart';
 import '../models/user_model.dart';
+import '../utils/currency_helper.dart';
+
+enum ChartType { pie, bar, line }
 
 class AnalyticsScreen extends StatefulWidget {
   final UserModel? user;
@@ -20,6 +24,19 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   bool _isLoading = true;
   Map<String, dynamic> _categoryTotals = {};
   Map<String, dynamic> _monthlyTrends = {};
+  ChartType _selectedChartType = ChartType.pie;
+
+  // Modern Color Palette
+  final List<Color> _chartColors = [
+    const Color(0xFF6366F1), // Indigo
+    const Color(0xFFEF4444), // Red
+    const Color(0xFF10B981), // Emerald
+    const Color(0xFFF59E0B), // Amber
+    const Color(0xFFEC4899), // Pink
+    const Color(0xFF8B5CF6), // Violet
+    const Color(0xFF06B6D4), // Cyan
+    const Color(0xFFF97316), // Orange
+  ];
 
   @override
   void initState() {
@@ -39,7 +56,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
         _isLoading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -48,132 +65,181 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
     return Scaffold(
       backgroundColor: widget.isDark
           ? const Color(0xFF020617)
-          : const Color(0xFFF5F7FA),
+          : const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: Text(
           'Analytics',
           style: GoogleFonts.inter(fontWeight: FontWeight.bold),
         ),
+        centerTitle: true,
         backgroundColor: Colors.transparent,
-        foregroundColor: widget.isDark ? Colors.white : Colors.black,
+        foregroundColor: widget.isDark ? Colors.white : Colors.blueGrey[900],
         elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: const Color(0xFF009B6E),
-          unselectedLabelColor: widget.isDark ? Colors.white54 : Colors.grey,
-          indicatorColor: const Color(0xFF009B6E),
-          tabs: const [
-            Tab(text: 'Categories'),
-            Tab(text: 'Trends'),
-          ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Container(
+              height: 40,
+              decoration: BoxDecoration(
+                color: widget.isDark
+                    ? const Color(0xFF1E293B)
+                    : Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: const Color(0xFF0F172A), // Dark accents
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF10B981), Color(0xFF059669)],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                labelColor: Colors.white,
+                unselectedLabelColor: widget.isDark
+                    ? Colors.grey[400]
+                    : Colors.grey[600],
+                labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                tabs: const [
+                  Tab(text: 'Categories'),
+                  Tab(text: 'Trends'),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : TabBarView(
               controller: _tabController,
-              children: [_buildCategoryView(), _buildTrendView()],
+              children: [_buildCategoryAnalysis(), _buildTrendAnalysis()],
             ),
     );
   }
 
-  Widget _buildCategoryView() {
+  Widget _buildCategoryAnalysis() {
     if (_categoryTotals.isEmpty) {
-      return Center(
-        child: Text(
-          'No data available',
-          style: GoogleFonts.inter(color: Colors.grey),
-        ),
-      );
+      return _buildEmptyState();
     }
-
-    final total = _categoryTotals.values.fold(
-      0.0,
-      (sum, val) => sum + (val as num).toDouble(),
-    );
-    final List<PieChartSectionData> sections = [];
-    final List<Color> colors = [
-      Colors.blue,
-      Colors.red,
-      Colors.green,
-      Colors.orange,
-      Colors.purple,
-      Colors.teal,
-      Colors.pink,
-    ];
-
-    int i = 0;
-    _categoryTotals.forEach((key, value) {
-      final amount = (value as num).toDouble();
-      final percent = (amount / total) * 100;
-      final color = colors[i % colors.length];
-      sections.add(
-        PieChartSectionData(
-          color: color,
-          value: amount,
-          title: '${percent.toStringAsFixed(0)}%',
-          radius: 50,
-          titleStyle: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      );
-      i++;
-    });
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          SizedBox(
-            height: 250,
-            child: PieChart(
-              PieChartData(
-                sections: sections,
-                sectionsSpace: 2,
-                centerSpaceRadius: 40,
-                borderData: FlBorderData(show: false),
+          // Chart Type Selector
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: widget.isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.grey.shade200,
               ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildChartTypeBtn(ChartType.pie, LucideIcons.pieChart),
+                _buildChartTypeBtn(ChartType.bar, LucideIcons.barChart),
+                // _buildChartTypeBtn(ChartType.line, LucideIcons.lineChart), // Less useful for categories
+              ],
             ),
           ),
           const SizedBox(height: 24),
-          ..._categoryTotals.entries.map((e) {
-            final amt = (e.value as num).toDouble();
+
+          // Main Chart Card
+          Container(
+            height: 320,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: _selectedChartType == ChartType.pie
+                ? _buildPieChart()
+                : _buildCategoryBarChart(),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Breakdown List
+          ..._categoryTotals.entries.toList().asMap().entries.map((entry) {
+            final index = entry.key;
+            final key = entry.value.key;
+            final amount = (entry.value.value as num).toDouble();
+            final color = _chartColors[index % _chartColors.length];
+
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: widget.isDark ? const Color(0xFF1E2028) : Colors.white,
+                color: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: widget.isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.grey.shade100,
+                ),
               ),
               child: Row(
                 children: [
                   Container(
-                    width: 12,
-                    height: 12,
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
-                      color:
-                          colors[_categoryTotals.keys.toList().indexOf(e.key) %
-                              colors.length],
-                      shape: BoxShape.circle,
+                      color: color.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      _getIconForCategory(key),
+                      color: color,
+                      size: 20,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
                   Expanded(
-                    child: Text(
-                      e.key,
-                      style: GoogleFonts.inter(
-                        color: widget.isDark ? Colors.white : Colors.black87,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          key,
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.w600,
+                            color: widget.isDark
+                                ? Colors.white
+                                : Colors.blueGrey[900],
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   Text(
-                    '₹${amt.toStringAsFixed(0)}',
+                    CurrencyHelper.format(amount),
                     style: GoogleFonts.inter(
-                      color: widget.isDark ? Colors.white70 : Colors.black87,
+                      fontWeight: FontWeight.bold,
+                      color: widget.isDark
+                          ? Colors.white
+                          : Colors.blueGrey[900],
+                      fontSize: 15,
                     ),
                   ),
                 ],
@@ -185,61 +251,69 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
     );
   }
 
-  Widget _buildTrendView() {
+  Widget _buildTrendAnalysis() {
     if (_monthlyTrends.isEmpty) {
-      return Center(
-        child: Text(
-          'No data available',
-          style: GoogleFonts.inter(color: Colors.grey),
-        ),
-      );
+      return _buildEmptyState();
     }
 
-    // Sort keys maybe? assuming 'YYYY-M' format.
     final keys = _monthlyTrends.keys.toList()..sort();
-    List<BarChartGroupData> barGroups = [];
     double maxVal = 0;
-
-    for (int i = 0; i < keys.length; i++) {
-      final val = (_monthlyTrends[keys[i]] as num).toDouble();
+    for (var k in keys) {
+      final val = (_monthlyTrends[k] as num).toDouble();
       if (val > maxVal) maxVal = val;
-      barGroups.add(
-        BarChartGroupData(
-          x: i,
-          barRods: [
-            BarChartRodData(
-              toY: val,
-              color: const Color(0xFF009B6E),
-              width: 16,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ],
-        ),
-      );
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(24),
+    // Default to Line chart for trends as it shows velocity better
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          Expanded(
-            child: BarChart(
-              BarChartData(
-                maxY: maxVal * 1.2,
+          Container(
+            height: 400,
+            padding: const EdgeInsets.fromLTRB(16, 32, 24, 16),
+            decoration: BoxDecoration(
+              color: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: maxVal / 5 == 0 ? 1 : maxVal / 5,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: widget.isDark
+                        ? Colors.white10
+                        : Colors.grey.shade100,
+                    strokeWidth: 1,
+                  ),
+                ),
                 titlesData: FlTitlesData(
                   show: true,
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      getTitlesWidget: (val, meta) {
-                        if (val.toInt() < 0 || val.toInt() >= keys.length) {
-                          return const Text('');
+                      reservedSize: 30,
+                      interval: 1,
+                      getTitlesWidget: (value, meta) {
+                        if (value.toInt() < 0 || value.toInt() >= keys.length) {
+                          return const SizedBox();
                         }
-                        // Parse 'YYYY-M' to 'MMM'
-                        final parts = keys[val.toInt()].split('-');
-                        // Quick mapping
-                        final m = int.parse(parts[1]);
-                        const months = [
+                        final parts = keys[value.toInt()].split('-');
+                        final months = [
                           'Jan',
                           'Feb',
                           'Mar',
@@ -253,56 +327,289 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                           'Nov',
                           'Dec',
                         ];
+                        final mIndex = int.parse(parts[1]) - 1;
                         return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
+                          padding: const EdgeInsets.only(top: 8),
                           child: Text(
-                            months[m - 1],
-                            style: TextStyle(
-                              color: widget.isDark
-                                  ? Colors.white54
-                                  : Colors.grey,
-                              fontSize: 10,
+                            months[mIndex],
+                            style: GoogleFonts.inter(
+                              color: Colors.grey,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         );
                       },
                     ),
                   ),
-                  leftTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      interval: maxVal / 5 == 0 ? 1 : maxVal / 5,
+                      reservedSize: 40,
+                      getTitlesWidget: (value, meta) {
+                        if (value == 0) return const SizedBox();
+                        return Text(
+                          CurrencyHelper.formatCompact(value),
+                          style: GoogleFonts.inter(
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
                 borderData: FlBorderData(show: false),
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: maxVal / 5,
-                  getDrawingHorizontalLine: (val) => FlLine(
-                    color: widget.isDark
-                        ? Colors.white10
-                        : Colors.grey.shade200,
-                    strokeWidth: 1,
+                minX: 0,
+                maxX: (keys.length - 1).toDouble(),
+                minY: 0,
+                maxY: maxVal * 1.1,
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: List.generate(keys.length, (index) {
+                      return FlSpot(
+                        index.toDouble(),
+                        (_monthlyTrends[keys[index]] as num).toDouble(),
+                      );
+                    }),
+                    isCurved: true,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF10B981), Color(0xFF059669)],
+                    ),
+                    barWidth: 4,
+                    isStrokeCapRound: true,
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) {
+                        return FlDotCirclePainter(
+                          radius: 4,
+                          color: const Color(0xFF10B981),
+                          strokeWidth: 2,
+                          strokeColor: Colors.white,
+                        );
+                      },
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF10B981).withValues(alpha: 0.3),
+                          const Color(0xFF10B981).withValues(alpha: 0.0),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
                   ),
-                ),
-                barGroups: barGroups,
+                ],
               ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Monthly Spending Trends',
-            style: GoogleFonts.inter(
-              color: widget.isDark ? Colors.white54 : Colors.black54,
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildPieChart() {
+    final total = _categoryTotals.values.fold(
+      0.0,
+      (sum, val) => sum + (val as num).toDouble(),
+    );
+
+    return PieChart(
+      PieChartData(
+        sectionsSpace: 4,
+        centerSpaceRadius: 60,
+        sections: _categoryTotals.entries.toList().asMap().entries.map((entry) {
+          final index = entry.key;
+          final value = (entry.value.value as num).toDouble();
+          final color = _chartColors[index % _chartColors.length];
+          final percent = (value / total) * 100;
+
+          return PieChartSectionData(
+            color: color,
+            value: value,
+            title: '${percent.toStringAsFixed(0)}%',
+            radius: 50,
+            titleStyle: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildCategoryBarChart() {
+    final entries = _categoryTotals.entries.toList();
+    double maxVal = 0;
+    for (var e in entries) {
+      if ((e.value as num).toDouble() > maxVal) {
+        maxVal = (e.value as num).toDouble();
+      }
+    }
+
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: maxVal * 1.1,
+        barTouchData: BarTouchData(
+          enabled: true,
+          touchTooltipData: BarTouchTooltipData(
+            getTooltipColor: (_) => Colors.blueGrey,
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              return BarTooltipItem(
+                '${entries[group.x.toInt()].key}\n',
+                const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+                children: [
+                  TextSpan(
+                    text: CurrencyHelper.format(rod.toY),
+                    style: const TextStyle(color: Colors.yellowAccent),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        titlesData: FlTitlesData(
+          show: true,
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                if (value.toInt() >= entries.length) return const SizedBox();
+                // Show first letter of category as label
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    entries[value.toInt()].key.substring(0, 3), // First 3 chars
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          leftTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+        ),
+        gridData: const FlGridData(show: false),
+        borderData: FlBorderData(show: false),
+        barGroups: entries.asMap().entries.map((entry) {
+          final index = entry.key;
+          final value = (entry.value.value as num).toDouble();
+          final color = _chartColors[index % _chartColors.length];
+
+          return BarChartGroupData(
+            x: index,
+            barRods: [
+              BarChartRodData(
+                toY: value,
+                color: color,
+                width: 16,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(6),
+                ),
+                backDrawRodData: BackgroundBarChartRodData(
+                  show: true,
+                  toY: maxVal * 1.1,
+                  color: widget.isDark ? Colors.white10 : Colors.grey.shade100,
+                ),
+              ),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            LucideIcons.barChart2,
+            size: 64,
+            color: widget.isDark ? Colors.white24 : Colors.grey.shade300,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No data to analyze yet',
+            style: GoogleFonts.inter(
+              color: widget.isDark ? Colors.white54 : Colors.grey.shade500,
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChartTypeBtn(ChartType type, IconData icon) {
+    final isSelected = _selectedChartType == type;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedChartType = type),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF10B981) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: isSelected
+              ? Colors.white
+              : widget.isDark
+              ? Colors.grey
+              : Colors.grey.shade600,
+        ),
+      ),
+    );
+  }
+
+  IconData _getIconForCategory(String category) {
+    switch (category.toLowerCase()) {
+      case 'food':
+        return LucideIcons.utensils;
+      case 'transport':
+        return LucideIcons.bus;
+      case 'shopping':
+        return LucideIcons.shoppingBag;
+      case 'bills':
+        return LucideIcons.receipt;
+      case 'entertainment':
+        return LucideIcons.film;
+      case 'health':
+        return LucideIcons.heartPulse;
+      case 'education':
+        return LucideIcons.graduationCap;
+      case 'groceries':
+        return LucideIcons.shoppingCart;
+      case 'rent':
+        return LucideIcons.home;
+      case 'travel':
+        return LucideIcons.plane;
+      default:
+        return LucideIcons.tag;
+    }
   }
 }

@@ -25,7 +25,7 @@ class CurrencyHelper {
     // Convert logic (simplistic)
     // Assuming amount passed is always in INR? Or handled by caller?
     // If we just formatting:
-    final symbol = symbols[selectedCurrency] ?? '₹';
+
     // If we want to convert:
     // double converted = amount * (rates[selectedCurrency] ?? 1.0);
     // But existing usage in Debt/Recurring simply called format(amount).
@@ -38,6 +38,14 @@ class CurrencyHelper {
     // BUT since I added `selectedCurrency`, I should probably respect it?
     // Let's keep it safe:
     return NumberFormat.currency(
+      locale: 'en_IN',
+      symbol: '₹',
+      decimalDigits: 0,
+    ).format(amount);
+  }
+
+  static String formatCompact(double amount) {
+    return NumberFormat.compactCurrency(
       locale: 'en_IN',
       symbol: '₹',
       decimalDigits: 0,

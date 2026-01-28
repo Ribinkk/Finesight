@@ -1,184 +1,310 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../models/expense.dart';
-import '../utils/currency_helper.dart';
+import '../models/user_model.dart';
+import '../services/api_service.dart';
 
-class AIScreen extends StatelessWidget {
+class AIScreen extends StatefulWidget {
   final List<Expense> expenses;
   final bool isDark;
+  final UserModel? user;
+  final VoidCallback? onDataChanged;
 
-  const AIScreen({super.key, required this.expenses, required this.isDark});
+  const AIScreen({
+    super.key,
+    required this.expenses,
+    required this.isDark,
+    this.user,
+    this.onDataChanged,
+  });
+
+  @override
+  State<AIScreen> createState() => _AIScreenState();
+}
+
+class _AIScreenState extends State<AIScreen> {
+  final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  final List<Map<String, String>> _messages = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // precise initial context
+    _messages.add({
+      'role': 'system',
+      'content':
+          'I am your financial assistant. Ask me anything about your expenses!',
+    });
+  }
+
+  Future<void> _sendMessage() async {
+    if (_controller.text.trim().isEmpty) return;
+
+    final userMessage = _controller.text.trim();
+    setState(() {
+      _messages.add({'role': 'user', 'content': userMessage});
+      _isLoading = true;
+    });
+    _controller.clear();
+    _scrollToBottom();
+
+    try {
+      // Prepare context from expenses
+      // optimize by sending only relevant summary or last N expenses if needed
+      // For now, let's send a summary to avoid token limits if many expenses
+      final expenseSummary = widget.expenses
+          .map(
+            (e) =>
+                "${e.date.toIso8601String().split('T')[0]}: ${e.title} - ${e.amount} (${e.category})",
+          )
+          .join('\n');
+
+      final context = [
+        {
+          'role': 'system',
+          'content': 'Current Expenses Data:\n$expenseSummary',
+        },
+      ];
+
+      final reply = await ApiService.chatWithAI(
+        userMessage,
+        context,
+        widget.user?.uid ?? '',
+      );
+
+      if (mounted) {
+        setState(() {
+          // Check if this was an action (starts with ✅)
+          final isAction = reply.contains('✅');
+          // Clean markdown formatting from reply
+          final cleanReply = reply
+              .replaceAll('**', '') // Remove bold markdown
+              .replaceAll('*', '') // Remove italic markdown
+              .replaceAll('__', '') // Remove underline markdown
+              .replaceAll(
+                '_',
+                ' ',
+              ); // Remove single underscores (replace with space)
+
+          _messages.add({
+            'role': 'assistant',
+            'content': cleanReply,
+            'isAction': isAction.toString(),
+          });
+          _isLoading = false;
+        });
+        _scrollToBottom();
+
+        // If AI performed an action, refresh data
+        if (reply.contains('✅')) {
+          widget.onDataChanged?.call();
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _messages.add({
+            'role': 'assistant',
+            'content': 'Sorry, I encountered an error. Please try again.',
+          });
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      }
+    }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Basic Analysis
-    final double totalSpent = expenses.fold(0, (sum, e) => sum + e.amount);
-    // insights mock
-
-    // Insights Mock
-    final insights = [
-      {
-        'icon': LucideIcons.trendingUp,
-        'title': 'Spending Trend',
-        'desc':
-            'You are projected to spend ${CurrencyHelper.format(totalSpent * 1.1)} this month, 10% higher than average.',
-        'color': Colors.orange,
-      },
-      {
-        'icon': LucideIcons.coffee,
-        'title': 'Habit Alert',
-        'desc':
-            'Frequent coffee visits detected. Consider a subscription to save ~${CurrencyHelper.format(500)}/mo.',
-        'color': Colors.blue,
-      },
-      {
-        'icon': LucideIcons.piggyBank,
-        'title': 'Savings Opportunity',
-        'desc':
-            'Reducing dining out by 20% could help you reach your "New Car" goal 1 month earlier.',
-        'color': Colors.green,
-      },
-    ];
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      children: [
+        // Header
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
+            border: Border(
+              bottom: BorderSide(
+                color: widget.isDark
+                    ? Colors.grey.shade800
+                    : Colors.grey.shade200,
+              ),
+            ),
+          ),
+          child: Row(
             children: [
               Icon(
                 LucideIcons.sparkles,
                 color: const Color(0xFF009B6E),
-                size: 28,
+                size: 24,
               ),
               const SizedBox(width: 12),
               Text(
-                'AI Insights',
+                'AI Financial Assistant',
                 style: GoogleFonts.inter(
-                  fontSize: 24,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black,
+                  color: widget.isDark ? Colors.white : Colors.black,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+        ),
 
-          // Forecast Chart
-          Text(
-            'Spending Forecast',
-            style: TextStyle(
-              color: isDark ? Colors.white70 : Colors.black87,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            height: 200,
+        // Chat Area
+        Expanded(
+          child: ListView.builder(
+            controller: _scrollController,
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(show: false),
-                titlesData: FlTitlesData(show: false),
-                borderData: FlBorderData(show: false),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: const [
-                      FlSpot(0, 3),
-                      FlSpot(1, 4),
-                      FlSpot(2, 3.5),
-                      FlSpot(3, 5),
-                      FlSpot(4, 4),
-                      FlSpot(5, 6),
-                    ],
-                    isCurved: true,
-                    color: const Color(0xFF009B6E),
-                    barWidth: 4,
-                    dotData: FlDotData(show: false),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: const Color(0xFF009B6E).withValues(alpha: 0.2),
-                    ),
-                  ),
-                  LineChartBarData(
-                    spots: const [FlSpot(5, 6), FlSpot(6, 6.5), FlSpot(7, 7)],
-                    isCurved: true,
-                    color: Colors.orange,
-                    barWidth: 3,
-                    dashArray: [5, 5],
-                    dotData: FlDotData(show: false),
-                  ),
-                ],
-              ),
-            ),
-          ).animate().fadeIn(duration: 600.ms),
+            itemCount: _messages.length,
+            itemBuilder: (context, index) {
+              final msg = _messages[index];
+              final isUser = msg['role'] == 'user';
+              final isSystem = msg['role'] == 'system';
 
-          const SizedBox(height: 24),
-
-          // Insights List
-          Text(
-            'Recommendations',
-            style: TextStyle(
-              color: isDark ? Colors.white70 : Colors.black87,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          ...insights.asMap().entries.map((entry) {
-            final i = entry.value;
-            return Card(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 0,
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(16),
-                    leading: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: (i['color'] as Color).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        i['icon'] as IconData,
-                        color: i['color'] as Color,
+              if (isSystem) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Center(
+                    child: Text(
+                      msg['content']!,
+                      style: TextStyle(
+                        color: widget.isDark
+                            ? Colors.grey
+                            : Colors.grey.shade600,
+                        fontSize: 12,
                       ),
                     ),
-                    title: Text(
-                      i['title'] as String,
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : Colors.black,
-                      ),
+                  ),
+                );
+              }
+
+              return Align(
+                alignment: isUser
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.75,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isUser
+                        ? const Color(0xFF10B981)
+                        : (widget.isDark
+                              ? const Color(0xFF334155)
+                              : Colors.white),
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(16),
+                      topRight: const Radius.circular(16),
+                      bottomLeft: Radius.circular(isUser ? 16 : 4),
+                      bottomRight: Radius.circular(isUser ? 4 : 16),
                     ),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        i['desc'] as String,
-                        style: TextStyle(
-                          color: isDark ? Colors.grey : Colors.grey.shade600,
+                    boxShadow: [
+                      if (!isUser)
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
                         ),
-                      ),
+                    ],
+                  ),
+                  child: Text(
+                    msg['content']!,
+                    style: GoogleFonts.inter(
+                      color: isUser
+                          ? Colors.white
+                          : (widget.isDark ? Colors.white : Colors.black87),
+                      height: 1.4,
                     ),
                   ),
-                )
-                .animate()
-                .slideX(begin: 0.2, end: 0, delay: (200 * entry.key).ms)
-                .fadeIn();
-          }),
-        ],
-      ),
+                ),
+              ).animate().fadeIn().slideY(begin: 0.1, end: 0);
+            },
+          ),
+        ),
+
+        // Input Area
+        Container(
+          padding: const EdgeInsets.all(16),
+          color: widget.isDark ? const Color(0xFF0F172A) : Colors.white,
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  style: TextStyle(
+                    color: widget.isDark ? Colors.white : Colors.black,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Ask about your spending...',
+                    hintStyle: TextStyle(
+                      color: widget.isDark ? Colors.grey : Colors.grey.shade400,
+                    ),
+                    filled: true,
+                    fillColor: widget.isDark
+                        ? const Color(0xFF1E293B)
+                        : Colors.grey.shade100,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                  ),
+                  onSubmitted: (_) => _sendMessage(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                decoration: const BoxDecoration(
+                  color: Color(0xFF10B981),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(
+                          LucideIcons.send,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                  onPressed: _isLoading ? null : _sendMessage,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

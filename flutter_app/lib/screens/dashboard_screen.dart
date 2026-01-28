@@ -6,20 +6,22 @@ import '../utils/currency_helper.dart';
 import '../models/expense.dart';
 import '../models/payment.dart';
 import '../models/income.dart';
-import '../models/user_model.dart'; // Needed for passing user to AnalyticsScreen? Use widget.user if available but DashboardScreen is stateless without user.
+import '../models/user_model.dart'; // Needed for passing widget.user to AnalyticsScreen? Use widget.widget.user if available but DashboardScreen is stateless without user.
 import 'analytics_screen.dart';
-// Trying to access user?
+import '../services/api_service.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+// Trying to access widget.user?
 // DashboardScreen receives data, but AnalyticsScreen needs userId.
-// Dashboard currently doesn't have user object passed to it, only data.
+// Dashboard currently doesn't have widget.user object passed to it, only data.
 // MainScreen has user.
-// I need to update DashboardScreen to accept user object or pass userId.
+// I need to update DashboardScreen to accept widget.user object or pass userId.
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   final List<Expense> expenses;
   final List<Payment> payments;
   final List<Income> incomes;
   final bool isDark;
-  final UserModel? user; // Added user
+  final UserModel? user;
 
   const DashboardScreen({
     super.key,
@@ -31,11 +33,71 @@ class DashboardScreen extends StatelessWidget {
   });
 
   @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  String? _aiTip;
+  bool _isLoadingTip = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAITip();
+  }
+
+  Future<void> _fetchAITip() async {
+    try {
+      // Create expense summary for context
+      final totalSpent = widget.expenses.fold(0.0, (sum, e) => sum + e.amount);
+      final categories = <String, double>{};
+      for (var e in widget.expenses) {
+        categories[e.category] = (categories[e.category] ?? 0) + e.amount;
+      }
+      final topCategory = categories.entries.isEmpty
+          ? 'None'
+          : categories.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+
+      final context = [
+        {
+          'role': 'system',
+          'content':
+              'User spent \$${totalSpent.toStringAsFixed(2)} total. Top category: $topCategory.',
+        },
+      ];
+
+      final tip = await ApiService.chatWithAI(
+        'Give me ONE short, actionable financial tip (max 2 sentences) based on my spending. Be specific and helpful.',
+        context,
+        widget.user?.uid ?? '',
+      );
+
+      if (mounted) {
+        setState(() {
+          _aiTip = tip;
+          _isLoadingTip = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _aiTip =
+              'Track your daily expenses to identify savings opportunities!';
+          _isLoadingTip = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final totalExpenses = expenses.fold(0.0, (sum, exp) => sum + exp.amount);
+    final totalExpenses = widget.expenses.fold(
+      0.0,
+      (sum, exp) => sum + exp.amount,
+    );
 
     final now = DateTime.now();
-    final thisMonthExpenses = expenses.where((exp) {
+    final thisMonthExpenses = widget.expenses.where((exp) {
       return exp.date.month == now.month && exp.date.year == now.year;
     });
     final monthTotal = thisMonthExpenses.fold(
@@ -43,20 +105,28 @@ class DashboardScreen extends StatelessWidget {
       (sum, exp) => sum + exp.amount,
     );
 
-    final successfulPayments = payments
+    final successfulPayments = widget.payments
         .where((p) => p.status == 'success')
         .toList();
-    final totalPayments = successfulPayments.fold(
+    final totalPaymentsValue = successfulPayments.fold(
       0.0,
       (sum, p) => sum + p.amount,
     );
 
-    final totalIncomes = incomes.fold(0.0, (sum, inc) => sum + inc.amount);
-    final grandTotalIncome = totalPayments + totalIncomes;
+    final upiExpenses = widget.expenses
+        .where((e) => e.paymentMethod.toUpperCase() == 'UPI')
+        .toList();
+    final totalDigitalSpent = upiExpenses.fold(0.0, (sum, e) => sum + e.amount);
+
+    final totalIncomes = widget.incomes.fold(
+      0.0,
+      (sum, inc) => sum + inc.amount,
+    );
+    final grandTotalIncome = totalPaymentsValue + totalIncomes;
 
     // Calculate Category Totals
     final categoryTotals = <String, double>{};
-    for (var exp in expenses) {
+    for (var exp in widget.expenses) {
       categoryTotals[exp.category] =
           (categoryTotals[exp.category] ?? 0) + exp.amount;
     }
@@ -74,136 +144,205 @@ class DashboardScreen extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: isDark ? Colors.grey : Colors.grey.shade600,
+              color: widget.isDark ? Colors.grey : Colors.grey.shade600,
             ),
-          ),
+          ).animate().fadeIn(duration: 600.ms).slideX(begin: -0.1),
           const SizedBox(height: 16),
 
-          // Balance Card
+          // AI Tip Card
           Card(
-            elevation: 8,
+            elevation: 2,
+            color: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: isDark
-                    ? const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF064E3B), Color(0xFF065F46)],
-                      )
-                    : const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF2ECC71), Color(0xFF27AE60)],
-                      ),
-              ),
-              padding: const EdgeInsets.all(24),
-              child: Column(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        LucideIcons.wallet,
-                        color: isDark ? Colors.green.shade200 : Colors.white,
-                        size: 20,
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Available Balance',
-                        style: GoogleFonts.inter(
-                          color: isDark ? Colors.green.shade200 : Colors.white,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    CurrencyHelper.format(grandTotalIncome - totalExpenses),
-                    style: GoogleFonts.inter(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      LucideIcons.lightbulb,
                       color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
+                      size: 20,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Container(
-                    height: 1,
-                    color: isDark
-                        ? Colors.green.shade800
-                        : Colors.green.shade400,
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  LucideIcons.arrowUpRight,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Income',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ],
-                            ),
-                            Text(
-                              CurrencyHelper.format(grandTotalIncome),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'AI Tip',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF8B5CF6),
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  LucideIcons.arrowDownRight,
-                                  color: Colors.white,
-                                  size: 16,
+                        const SizedBox(height: 4),
+                        _isLoadingTip
+                            ? Text(
+                                'Getting personalized tip...',
+                                style: TextStyle(
+                                  color: widget.isDark
+                                      ? Colors.grey
+                                      : Colors.grey.shade600,
+                                  fontStyle: FontStyle.italic,
                                 ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Expenses',
-                                  style: TextStyle(color: Colors.white),
+                              )
+                            : Text(
+                                _aiTip ?? 'Track your expenses daily!',
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  color: widget.isDark
+                                      ? Colors.white
+                                      : Colors.black87,
+                                  height: 1.4,
                                 ),
-                              ],
-                            ),
-                            Text(
-                              CurrencyHelper.format(totalExpenses),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
+          ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
+          const SizedBox(height: 16),
+
+          // Balance Card
+          Card(
+                elevation: 8,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Theme.of(context).colorScheme.primary,
+                        Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.8),
+                      ],
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            LucideIcons.wallet,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Available Balance',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        CurrencyHelper.format(grandTotalIncome - totalExpenses),
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        height: 1,
+                        color: Colors.white.withValues(alpha: 0.2),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      LucideIcons.arrowUpRight,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Income',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  CurrencyHelper.format(grandTotalIncome),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      LucideIcons.arrowDownRight,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'expenses',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  CurrencyHelper.format(totalExpenses),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              )
+              .animate()
+              .fadeIn(delay: 400.ms)
+              .scale(begin: const Offset(0.9, 0.9)),
 
           const SizedBox(height: 16),
 
@@ -213,7 +352,7 @@ class DashboardScreen extends StatelessWidget {
               Expanded(
                 child: Card(
                   elevation: 2,
-                  color: isDark
+                  color: widget.isDark
                       ? const Color(0xFF0F172A)
                       : Colors.white, // slate-900
                   child: Padding(
@@ -239,7 +378,9 @@ class DashboardScreen extends StatelessWidget {
                         Text(
                           'This Month',
                           style: TextStyle(
-                            color: isDark ? Colors.grey : Colors.grey.shade600,
+                            color: widget.isDark
+                                ? Colors.grey
+                                : Colors.grey.shade600,
                           ),
                         ),
                         Text(
@@ -247,7 +388,7 @@ class DashboardScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Colors.black,
+                            color: widget.isDark ? Colors.white : Colors.black,
                           ),
                         ),
                       ],
@@ -259,7 +400,7 @@ class DashboardScreen extends StatelessWidget {
               Expanded(
                 child: Card(
                   elevation: 2,
-                  color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                  color: widget.isDark ? const Color(0xFF0F172A) : Colors.white,
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -281,17 +422,19 @@ class DashboardScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Payments',
+                          'Total Sent',
                           style: TextStyle(
-                            color: isDark ? Colors.grey : Colors.grey.shade600,
+                            color: widget.isDark
+                                ? Colors.grey
+                                : Colors.grey.shade600,
                           ),
                         ),
                         Text(
-                          '${successfulPayments.length}',
+                          CurrencyHelper.format(totalDigitalSpent),
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Colors.black,
+                            color: widget.isDark ? Colors.white : Colors.black,
                           ),
                         ),
                       ],
@@ -300,13 +443,13 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ),
             ],
-          ),
+          ).animate().fadeIn(delay: 600.ms).slideX(begin: 0.1),
 
           const SizedBox(height: 16),
 
           // Spending Breakdown (Pie Chart)
           Card(
-            color: isDark ? const Color(0xFF0F172A) : Colors.white,
+            color: widget.isDark ? const Color(0xFF0F172A) : Colors.white,
             elevation: 2,
             clipBehavior: Clip.antiAlias,
             child: InkWell(
@@ -314,7 +457,10 @@ class DashboardScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => AnalyticsScreen(user: user, isDark: isDark),
+                    builder: (_) => AnalyticsScreen(
+                      user: widget.user,
+                      isDark: widget.isDark,
+                    ),
                   ),
                 );
               },
@@ -327,7 +473,9 @@ class DashboardScreen extends StatelessWidget {
                       children: [
                         Icon(
                           LucideIcons.pieChart,
-                          color: isDark ? Colors.green.shade300 : Colors.green,
+                          color: widget.isDark
+                              ? Colors.green.shade300
+                              : Colors.green,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -335,13 +483,13 @@ class DashboardScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Colors.black,
+                            color: widget.isDark ? Colors.white : Colors.black,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 24),
-                    if (expenses.isEmpty)
+                    if (widget.expenses.isEmpty)
                       const Center(child: Text('No expenses to show'))
                     else
                       SizedBox(
@@ -400,7 +548,7 @@ class DashboardScreen extends StatelessWidget {
                                             entry.key,
                                             style: TextStyle(
                                               fontSize: 12,
-                                              color: isDark
+                                              color: widget.isDark
                                                   ? Colors.grey.shade300
                                                   : Colors.black87,
                                             ),
@@ -413,7 +561,7 @@ class DashboardScreen extends StatelessWidget {
                                           style: TextStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold,
-                                            color: isDark
+                                            color: widget.isDark
                                                 ? Colors.white
                                                 : Colors.black87,
                                           ),
@@ -431,7 +579,7 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ),
             ),
-          ),
+          ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.1),
 
           const SizedBox(height: 80), // Bottom padding for FAB/Nav
         ],

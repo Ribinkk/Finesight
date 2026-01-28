@@ -5,7 +5,7 @@ const IncomeSchema = new mongoose.Schema({
   user_id: { type: String, required: true, index: true },
   source: { type: String, required: true },
   amount: { type: Number, required: true },
-  date: { type: Date, required: true },
+  date: { type: String, required: true, index: true },
   description: String
 }, { timestamps: true });
 

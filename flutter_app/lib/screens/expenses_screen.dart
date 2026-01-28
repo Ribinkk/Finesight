@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../models/expense.dart';
 import '../models/income.dart';
 import 'package:image_picker/image_picker.dart';
+import '../services/scanner_service.dart';
+// import 'package:lottie/lottie.dart';
 
 class ExpensesScreen extends StatefulWidget {
   final List<Expense> expenses;
@@ -22,7 +24,10 @@ class ExpensesScreen extends StatefulWidget {
     required this.onDelete,
     required this.isDark,
     required this.categories,
+    this.initialType,
   });
+
+  final String? initialType;
 
   @override
   State<ExpensesScreen> createState() => _ExpensesScreenState();
@@ -37,40 +42,73 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
   String _selectedCategory = 'Food';
+  String? _selectedSubcategory; // New: for subcategory selection
   String _selectedAccount = 'Cash';
 
   // Data Lists
   final List<String> _accounts = ['Cash', 'Bank Account', 'Credit Card'];
   List<String> _categories = [];
 
-  // Category Maps
+  // Hierarchical Category Structure
+  final Map<String, List<String>> _categoryHierarchy = {
+    'Food': ['Restaurant', 'Coffee & Tea', 'Fast Food', 'Groceries', 'Snacks'],
+    'Transport': [
+      'Fuel',
+      'Public Transit',
+      'Taxi & Ride',
+      'Parking',
+      'Vehicle Maintenance',
+    ],
+    'Home': ['Rent', 'Utilities', 'Maintenance', 'Furniture', 'Decor'],
+    'Shopping': ['Clothing', 'Electronics', 'Books', 'Gifts', 'General'],
+    'Entertainment': ['Movies', 'Gaming', 'Music', 'Sports', 'Events'],
+    'Health': ['Medical', 'Pharmacy', 'Gym', 'Wellness', 'Insurance'],
+    'Education': ['Courses', 'Supplies', 'Books', 'Tuition'],
+    'Finance': ['Investments', 'Insurance', 'Savings', 'Taxes', 'Fees'],
+    'Travel': ['Hotels', 'Flights', 'Vacation', 'Transport'],
+    'Personal': ['Haircare', 'Beauty', 'Spa', 'Clothing'],
+    'Pets': ['Food', 'Vet', 'Supplies', 'Grooming'],
+    'Bills': ['Phone', 'Internet', 'Streaming', 'Subscriptions'],
+    'Family': ['Childcare', 'Activities', 'School', 'Toys'],
+    'Charity': ['Donations', 'Religious', 'Causes'],
+    'Other': ['Miscellaneous'],
+  };
+
+  // Category Colors - Main categories only
   final Map<String, Color> _categoryColors = {
     'Food': Colors.orange,
     'Transport': Colors.blue,
-    'Utilities': Colors.teal,
-    'Entertainment': Colors.pink,
+    'Home': Colors.brown,
     'Shopping': Colors.purple,
+    'Entertainment': Colors.pink,
     'Health': Colors.red,
     'Education': Colors.green,
-    'Groceries': Colors.lightGreen,
-    'Rent': Colors.brown,
-    'Investments': Colors.indigo,
+    'Finance': Colors.indigo,
     'Travel': Colors.cyan,
+    'Personal': Color(0xFFFF4081),
+    'Pets': Color(0xFFFF9800),
+    'Bills': Color(0xFF00BCD4),
+    'Family': Color(0xFFFFEB3B),
+    'Charity': Color(0xFF8BC34A),
     'Other': Colors.grey,
   };
 
+  // Category Icons - Main categories only
   final Map<String, IconData> _categoryIcons = {
     'Food': LucideIcons.utensils,
     'Transport': LucideIcons.car,
-    'Utilities': LucideIcons.zap,
-    'Entertainment': LucideIcons.film,
+    'Home': LucideIcons.home,
     'Shopping': LucideIcons.shoppingBag,
+    'Entertainment': LucideIcons.film,
     'Health': LucideIcons.heartPulse,
     'Education': LucideIcons.graduationCap,
-    'Groceries': LucideIcons.shoppingCart,
-    'Rent': LucideIcons.home,
-    'Investments': LucideIcons.trendingUp,
+    'Finance': LucideIcons.trendingUp,
     'Travel': LucideIcons.plane,
+    'Personal': LucideIcons.sparkles,
+    'Pets': LucideIcons.footprints,
+    'Bills': LucideIcons.receipt,
+    'Family': LucideIcons.baby,
+    'Charity': LucideIcons.heart,
     'Other': LucideIcons.circle,
   };
 
@@ -123,6 +161,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     if (_categories.isNotEmpty) {
       _selectedCategory = _categories.first;
     }
+    if (widget.initialType != null) {
+      _type = widget.initialType!;
+    }
   }
 
   void _submitData() {
@@ -148,15 +189,27 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       _selectedTime.minute,
     );
 
+    // Map accounts to standardized payment methods for digital tracking
+    String paymentMethod = _selectedAccount;
+    if (_selectedAccount == 'Bank Account') {
+      paymentMethod =
+          'UPI'; // Standardize digital payments as 'UPI' for the Total Sent stat
+    }
+
     if (_type == 'Expense') {
+      // Format: "MainCategory - Subcategory" or just "MainCategory" if no sub
+      final categoryLabel = _selectedSubcategory != null
+          ? '$_selectedCategory - $_selectedSubcategory'
+          : _selectedCategory;
+
       widget.onAdd(
         Expense(
           id: DateTime.now().toString(),
           title: enteredTitle,
           amount: enteredAmount,
-          category: _selectedCategory,
+          category: categoryLabel,
           date: combinedDateTime,
-          paymentMethod: _selectedAccount,
+          paymentMethod: paymentMethod,
           description: enteredDescription,
         ),
       );
@@ -174,13 +227,12 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       );
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$_type Added Successfully!'),
-        backgroundColor: Colors.green,
-      ),
-    );
-    Navigator.of(context).pop();
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$_type Added!')));
+      Navigator.of(context).pop();
+    }
   }
 
   void _presentDatePicker() {
@@ -303,28 +355,62 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         ),
       );
 
-      // Simulate OCR delay
-      await Future.delayed(const Duration(seconds: 2));
+      final scannedData = await ScannerService.scanReceipt(image);
 
       if (!mounted) return;
       Navigator.pop(context); // Close loader
 
-      setState(() {
-        _titleController.text = "Walmart Supercenter";
-        _amountController.text = "45.50";
-        _selectedCategory = "Groceries";
-        // Update color/icon for category
-        if (_categoryColors.containsKey("Groceries")) {
-          // Logic to update category UI automatically handled by _selectedCategory
-        }
-      });
+      if (scannedData.isNotEmpty) {
+        setState(() {
+          if (scannedData['title'] != null) {
+            _titleController.text = scannedData['title'];
+          }
+          if (scannedData['amount'] != null) {
+            _amountController.text = scannedData['amount'].toString();
+          }
+          if (scannedData['category'] != null) {
+            // Try to match category
+            String cat = scannedData['category'];
+            // Capitalize first letter
+            if (cat.isNotEmpty) {
+              cat = cat[0].toUpperCase() + cat.substring(1).toLowerCase();
+            }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Receipt Scanned! Data pre-filled.'),
-          backgroundColor: Colors.green,
-        ),
-      );
+            // Check if cat exists in _categories or _categoryHierarchy keys
+            if (_categories.contains(cat) ||
+                _categoryHierarchy.containsKey(cat)) {
+              _selectedCategory = cat;
+            } else {
+              // Fuzzy or basic mapping could go here, or default to Other
+              _selectedCategory = "Other";
+            }
+          }
+          if (scannedData['date'] != null) {
+            try {
+              _selectedDate = DateTime.parse(scannedData['date']);
+            } catch (e) {
+              /* ignore */
+            }
+          }
+          if (scannedData['description'] != null) {
+            _descriptionController.text = scannedData['description'];
+          }
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Receipt Scanned! Data pre-filled.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not extract data from receipt.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -514,7 +600,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   @override
   Widget build(BuildContext context) {
     bool isExpense = _type == 'Expense';
-    Color activeColor = isExpense ? Colors.redAccent : Colors.green;
+    final primaryColor = Theme.of(context).primaryColor;
+    Color activeColor = isExpense ? Colors.redAccent : primaryColor;
     Color bgColor = widget.isDark
         ? const Color(0xFF020617)
         : const Color(0xFFF5F7FA);
@@ -777,7 +864,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             ),
             const SizedBox(height: 32),
 
-            // Categories
+            // Categories - Main Categories
             if (isExpense) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -799,56 +886,53 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 ],
               ),
               const SizedBox(height: 16),
+
+              // Main Categories Grid
               Wrap(
                 spacing: 12,
                 runSpacing: 12,
-                children: _categories.map((category) {
-                  bool isSelected = _selectedCategory == category;
-                  Color catColor = _categoryColors[category] ?? Colors.grey;
-                  IconData catIcon =
-                      _categoryIcons[category] ?? LucideIcons.circle;
+                children: _categoryHierarchy.keys.map((category) {
+                  final isSelected = _selectedCategory == category;
+                  final color = _categoryColors[category] ?? Colors.grey;
+                  final icon = _categoryIcons[category] ?? LucideIcons.circle;
 
                   return GestureDetector(
-                    onTap: () => setState(() => _selectedCategory = category),
+                    onTap: () {
+                      setState(() {
+                        _selectedCategory = category;
+                        _selectedSubcategory =
+                            null; // Reset subcategory when changing main
+                      });
+                    },
                     child: Container(
-                      width: 100, // Fixed width for consistent grid
                       padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
                         vertical: 12,
-                        horizontal: 8,
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? catColor
-                            : catColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(16),
+                            ? color.withValues(alpha: 0.2)
+                            : (widget.isDark
+                                  ? Colors.white10
+                                  : Colors.grey.shade200),
+                        borderRadius: BorderRadius.circular(12),
                         border: isSelected
-                            ? Border.all(color: Colors.white, width: 2)
-                            : null,
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: catColor.withValues(alpha: 0.4),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ]
+                            ? Border.all(color: color, width: 2)
                             : null,
                       ),
-                      child: Column(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            catIcon,
-                            color: isSelected ? Colors.white : catColor,
-                            size: 24,
+                            icon,
+                            color: isSelected ? color : textColor,
+                            size: 20,
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(width: 8),
                           Text(
                             category,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: isSelected ? Colors.white : textColor,
+                              color: isSelected ? color : textColor,
                               fontWeight: isSelected
                                   ? FontWeight.bold
                                   : FontWeight.normal,
@@ -861,6 +945,70 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   );
                 }).toList(),
               ),
+              const SizedBox(height: 24),
+
+              // Subcategories - shown only when a main category is selected
+              if (_categoryHierarchy[_selectedCategory] != null) ...[
+                Text(
+                  "$_selectedCategory Subcategories",
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: _categoryHierarchy[_selectedCategory]!.map((sub) {
+                    final isSelected = _selectedSubcategory == sub;
+                    final mainColor =
+                        _categoryColors[_selectedCategory] ?? Colors.grey;
+
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedSubcategory = sub;
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? mainColor.withValues(alpha: 0.3)
+                              : (widget.isDark
+                                    ? Colors.white.withValues(alpha: 0.05)
+                                    : Colors.grey.shade100),
+                          borderRadius: BorderRadius.circular(20),
+                          border: isSelected
+                              ? Border.all(color: mainColor, width: 1.5)
+                              : Border.all(
+                                  color: widget.isDark
+                                      ? Colors.white.withValues(alpha: 0.1)
+                                      : Colors.grey.shade300,
+                                  width: 1,
+                                ),
+                        ),
+                        child: Text(
+                          sub,
+                          style: TextStyle(
+                            color: isSelected ? mainColor : textColor,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 8),
+              ],
               const SizedBox(height: 32),
             ],
 

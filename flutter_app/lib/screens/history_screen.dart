@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
 import '../models/expense.dart';
 import '../models/payment.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class HistoryScreen extends StatelessWidget {
   final List<Expense> expenses;
@@ -61,43 +62,53 @@ class HistoryScreen extends StatelessWidget {
               )
             : ListView(
                 padding: const EdgeInsets.all(16.0),
-                children: [
-                  // Header
-                  Row(
-                    children: [
-                      Icon(
-                        LucideIcons.history,
-                        color: isDark ? Colors.blue.shade300 : Colors.blue,
-                        size: 24,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Transaction History',
-                        style: GoogleFonts.inter(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${combinedTransactions.length} transactions',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: isDark ? Colors.grey : Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+                children:
+                    [
+                          // Header
+                          Row(
+                            children: [
+                              Icon(
+                                LucideIcons.history,
+                                color: isDark
+                                    ? Colors.blue.shade300
+                                    : Colors.blue,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Transaction History',
+                                style: GoogleFonts.inter(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark ? Colors.white : Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${combinedTransactions.length} transactions',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              color: isDark
+                                  ? Colors.grey
+                                  : Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
 
-                  // Transactions List
-                  ...combinedTransactions.map((transaction) {
-                    return _buildTransactionCard(transaction);
-                  }),
+                          // Transactions List
+                          ...combinedTransactions.map((transaction) {
+                            return _buildTransactionCard(transaction);
+                          }),
 
-                  const SizedBox(height: 80), // Bottom padding for nav bar
-                ],
+                          const SizedBox(
+                            height: 80,
+                          ), // Bottom padding for nav bar
+                        ]
+                        .animate(interval: 50.ms)
+                        .fadeIn(duration: 300.ms)
+                        .slideX(begin: -0.1),
               ),
       ),
     );
