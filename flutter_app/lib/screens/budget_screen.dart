@@ -261,21 +261,43 @@ class _BudgetScreenState extends State<BudgetScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: LinearProgressIndicator(
-                            value: totalBudget > 0
+                        Container(
+                          height: 12,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: FractionallySizedBox(
+                            alignment: Alignment.centerLeft,
+                            widthFactor: totalBudget > 0
                                 ? (totalSpent / totalBudget).clamp(0.0, 1.0)
                                 : 0,
-                            backgroundColor: Colors.white.withValues(
-                              alpha: 0.2,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    totalSpent > totalBudget
+                                        ? const Color(0xFFFF5252)
+                                        : Colors.white,
+                                    totalSpent > totalBudget
+                                        ? const Color(0xFFFF1744)
+                                        : Colors.white.withValues(alpha: 0.8),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  if (totalSpent > 0)
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                ],
+                              ),
                             ),
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              totalSpent > totalBudget
-                                  ? const Color(0xFFFF5252)
-                                  : Colors.white,
-                            ),
-                            minHeight: 10,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -396,21 +418,37 @@ class _BudgetScreenState extends State<BudgetScreen> {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: LinearProgressIndicator(
-                              value: progress,
-                              backgroundColor: widget.isDark
+                          Container(
+                            height: 10,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: widget.isDark
                                   ? Colors.grey.shade800
                                   : Colors.grey.shade100,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                isOverBudget
-                                    ? const Color(0xFFE74C3C)
-                                    : progress > 0.8
-                                    ? const Color(0xFFFF9F43) // Warning Orange
-                                    : const Color(0xFF009B6E),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: FractionallySizedBox(
+                              alignment: Alignment.centerLeft,
+                              widthFactor: progress,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      isOverBudget
+                                          ? const Color(0xFFE74C3C)
+                                          : progress > 0.8
+                                          ? const Color(0xFFFF9F43)
+                                          : const Color(0xFF009B6E),
+                                      isOverBudget
+                                          ? const Color(0xFFC0392B)
+                                          : progress > 0.8
+                                          ? const Color(0xFFFF6B6B)
+                                          : const Color(0xFF00E5A7),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
-                              minHeight: 8,
                             ),
                           ),
                           const SizedBox(height: 8),

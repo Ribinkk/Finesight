@@ -113,26 +113,25 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   };
 
   // Available options for new categories
-  final List<Color> _availableColors = [
-    Colors.red,
-    Colors.pink,
-    Colors.purple,
-    Colors.deepPurple,
-    Colors.indigo,
-    Colors.blue,
-    Colors.lightBlue,
-    Colors.cyan,
-    Colors.teal,
-    Colors.green,
-    Colors.lightGreen,
-    Colors.lime,
-    Colors.yellow,
-    Colors.amber,
-    Colors.orange,
-    Colors.deepOrange,
-    Colors.brown,
-    Colors.grey,
-    Colors.blueGrey,
+  final List<List<Color>> _availableGradients = [
+    [const Color(0xFFEF4444), const Color(0xFFF87171)], // Red
+    [const Color(0xFFEC4899), const Color(0xFFF472B6)], // Pink
+    [const Color(0xFFD946EF), const Color(0xFFE879F9)], // Fuchsia
+    [const Color(0xFF8B5CF6), const Color(0xFFA78BFA)], // Violet
+    [const Color(0xFF6366F1), const Color(0xFF818CF8)], // Indigo
+    [const Color(0xFF3B82F6), const Color(0xFF60A5FA)], // Blue
+    [const Color(0xFF0EA5E9), const Color(0xFF38BDF8)], // Sky
+    [const Color(0xFF06B6D4), const Color(0xFF22D3EE)], // Cyan
+    [const Color(0xFF14B8A6), const Color(0xFF2DD4BF)], // Teal
+    [const Color(0xFF10B981), const Color(0xFF34D399)], // Emerald
+    [const Color(0xFF22C55E), const Color(0xFF4ADE80)], // Green
+    [const Color(0xFF84CC16), const Color(0xFFA3E635)], // Lime
+    [const Color(0xFFEAB308), const Color(0xFFFACC15)], // Yellow
+    [const Color(0xFFF59E0B), const Color(0xFFFBBF24)], // Amber
+    [const Color(0xFFF97316), const Color(0xFFFB923C)], // Orange
+    [const Color(0xFFF43F5E), const Color(0xFFFB7185)], // Rose
+    [const Color(0xFF78350F), const Color(0xFF92400E)], // Brown
+    [const Color(0xFF64748B), const Color(0xFF94A3B8)], // Slate
   ];
 
   final List<IconData> _availableIcons = [
@@ -416,7 +415,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
   void _showAddCategoryDialog() {
     final categoryController = TextEditingController();
-    Color tempColor = _availableColors.first;
+    Color tempColor = _availableGradients.first[0];
     IconData tempIcon = _availableIcons.first;
 
     showDialog(
@@ -427,10 +426,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             backgroundColor: widget.isDark
                 ? const Color(0xFF1E293B)
                 : Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
             title: Text(
               "New Category",
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 color: widget.isDark ? Colors.white : Colors.black,
+                fontWeight: FontWeight.bold,
               ),
             ),
             content: SingleChildScrollView(
@@ -470,26 +473,40 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   ),
                   const SizedBox(height: 8),
                   SizedBox(
-                    height: 40,
+                    height: 48,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      itemCount: _availableColors.length,
+                      itemCount: _availableGradients.length,
                       itemBuilder: (ctx, index) {
-                        final color = _availableColors[index];
+                        final gradient = _availableGradients[index];
+                        final isSelected = tempColor == gradient[0];
                         return GestureDetector(
-                          onTap: () => setDialogState(() => tempColor = color),
+                          onTap: () =>
+                              setDialogState(() => tempColor = gradient[0]),
                           child: Container(
-                            margin: const EdgeInsets.only(right: 8),
-                            width: 40,
-                            height: 40,
+                            margin: const EdgeInsets.only(right: 12),
+                            width: 44,
+                            height: 44,
                             decoration: BoxDecoration(
-                              color: color,
+                              gradient: LinearGradient(
+                                colors: gradient,
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
                               shape: BoxShape.circle,
-                              border: tempColor == color
+                              boxShadow: [
+                                if (isSelected)
+                                  BoxShadow(
+                                    color: gradient[0].withValues(alpha: 0.4),
+                                    blurRadius: 8,
+                                    spreadRadius: 2,
+                                  ),
+                              ],
+                              border: isSelected
                                   ? Border.all(color: Colors.white, width: 3)
                                   : null,
                             ),
-                            child: tempColor == color
+                            child: isSelected
                                 ? const Icon(
                                     LucideIcons.check,
                                     color: Colors.white,
@@ -561,7 +578,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 onPressed: () {
                   final newCategory = categoryController.text.trim();
                   if (newCategory.isNotEmpty) {
-                    // Update Parent State
                     setState(() {
                       if (!_categories.contains(newCategory)) {
                         _categories = [..._categories, newCategory];
@@ -570,7 +586,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         _selectedCategory = newCategory;
 
                         ScaffoldMessenger.of(this.context).showSnackBar(
-                          // Use parent context
                           SnackBar(
                             content: Text("Category '$newCategory' Added!"),
                             duration: const Duration(seconds: 1),
@@ -588,6 +603,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     Navigator.pop(dialogContext);
                   }
                 },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF009B6E),
+                  foregroundColor: Colors.white,
+                ),
                 child: const Text("Add"),
               ),
             ],
