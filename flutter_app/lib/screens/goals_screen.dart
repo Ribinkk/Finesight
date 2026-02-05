@@ -426,15 +426,43 @@ class _GoalsScreenState extends State<GoalsScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 8),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: LinearProgressIndicator(
-                                      value: progress,
-                                      minHeight: 12,
-                                      backgroundColor: widget.isDark
+                                  Container(
+                                    height: 12,
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      color: widget.isDark
                                           ? Colors.black26
                                           : Colors.grey.shade200,
-                                      color: Color(goal.color),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: FractionallySizedBox(
+                                      alignment: Alignment.centerLeft,
+                                      widthFactor: progress,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              Color(goal.color),
+                                              Color(
+                                                goal.color,
+                                              ).withValues(alpha: 0.7),
+                                            ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          boxShadow: [
+                                            if (progress > 0)
+                                              BoxShadow(
+                                                color: Color(
+                                                  goal.color,
+                                                ).withValues(alpha: 0.3),
+                                                blurRadius: 4,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(height: 16),

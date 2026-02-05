@@ -26,16 +26,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   Map<String, dynamic> _monthlyTrends = {};
   ChartType _selectedChartType = ChartType.pie;
 
-  // Modern Color Palette
-  final List<Color> _chartColors = [
-    const Color(0xFF6366F1), // Indigo
-    const Color(0xFFEF4444), // Red
-    const Color(0xFF10B981), // Emerald
-    const Color(0xFFF59E0B), // Amber
-    const Color(0xFFEC4899), // Pink
-    const Color(0xFF8B5CF6), // Violet
-    const Color(0xFF06B6D4), // Cyan
-    const Color(0xFFF97316), // Orange
+  // Modern Gradient Palette
+  final List<List<Color>> _chartGradients = [
+    [const Color(0xFF6366F1), const Color(0xFF818CF8)], // Indigo
+    [const Color(0xFF10B981), const Color(0xFF34D399)], // Emerald
+    [const Color(0xFFF59E0B), const Color(0xFFFBBF24)], // Amber
+    [const Color(0xFFEF4444), const Color(0xFFF87171)], // Red
+    [const Color(0xFFEC4899), const Color(0xFFF472B6)], // Pink
+    [const Color(0xFF8B5CF6), const Color(0xFFA78BFA)], // Violet
+    [const Color(0xFF06B6D4), const Color(0xFF22D3EE)], // Cyan
+    [const Color(0xFFF97316), const Color(0xFFFB923C)], // Orange
   ];
 
   @override
@@ -160,7 +160,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
 
           // Main Chart Card
           Container(
-            height: 320,
+            height: 350, // Slightly taller
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
@@ -174,7 +174,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               ],
             ),
             child: _selectedChartType == ChartType.pie
-                ? _buildPieChart()
+                ? _buildPieChart(context)
                 : _buildCategoryBarChart(),
           ),
 
@@ -185,7 +185,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             final index = entry.key;
             final key = entry.value.key;
             final amount = (entry.value.value as num).toDouble();
-            final color = _chartColors[index % _chartColors.length];
+            final gradient = _chartGradients[index % _chartGradients.length];
 
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
@@ -205,12 +205,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.2),
+                      gradient: LinearGradient(
+                        colors: [
+                          gradient[0].withValues(alpha: 0.2),
+                          gradient[1].withValues(alpha: 0.1),
+                        ],
+                      ),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       _getIconForCategory(key),
-                      color: color,
+                      color: gradient[0],
                       size: 20,
                     ),
                   ),
@@ -284,13 +289,29 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             ),
             child: LineChart(
               LineChartData(
+                lineTouchData: LineTouchData(
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipColor: (spot) => Colors.blueGrey[900]!,
+                    getTooltipItems: (List<LineBarSpot> touchedSpots) {
+                      return touchedSpots.map((barSpot) {
+                        return LineTooltipItem(
+                          CurrencyHelper.format(barSpot.y),
+                          GoogleFonts.inter(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        );
+                      }).toList();
+                    },
+                  ),
+                ),
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
                   horizontalInterval: maxVal / 5 == 0 ? 1 : maxVal / 5,
                   getDrawingHorizontalLine: (value) => FlLine(
                     color: widget.isDark
-                        ? Colors.white10
+                        ? Colors.white.withValues(alpha: 0.05)
                         : Colors.grey.shade100,
                     strokeWidth: 1,
                   ),
@@ -346,7 +367,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                     sideTitles: SideTitles(
                       showTitles: true,
                       interval: maxVal / 5 == 0 ? 1 : maxVal / 5,
-                      reservedSize: 40,
+                      reservedSize: 45, // More space
                       getTitlesWidget: (value, meta) {
                         if (value == 0) return const SizedBox();
                         return Text(
@@ -364,7 +385,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 minX: 0,
                 maxX: (keys.length - 1).toDouble(),
                 minY: 0,
-                maxY: maxVal * 1.1,
+                maxY: maxVal * 1.2, // More headroom
                 lineBarsData: [
                   LineChartBarData(
                     spots: List.generate(keys.length, (index) {
@@ -374,6 +395,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                       );
                     }),
                     isCurved: true,
+                    curveSmoothness: 0.35,
                     gradient: const LinearGradient(
                       colors: [Color(0xFF10B981), Color(0xFF059669)],
                     ),
@@ -383,9 +405,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                       show: true,
                       getDotPainter: (spot, percent, barData, index) {
                         return FlDotCirclePainter(
-                          radius: 4,
+                          radius: 5,
                           color: const Color(0xFF10B981),
-                          strokeWidth: 2,
+                          strokeWidth: 3,
                           strokeColor: Colors.white,
                         );
                       },
@@ -411,35 +433,70 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
     );
   }
 
-  Widget _buildPieChart() {
+  Widget _buildPieChart(BuildContext context) {
     final total = _categoryTotals.values.fold(
       0.0,
       (sum, val) => sum + (val as num).toDouble(),
     );
 
-    return PieChart(
-      PieChartData(
-        sectionsSpace: 4,
-        centerSpaceRadius: 60,
-        sections: _categoryTotals.entries.toList().asMap().entries.map((entry) {
-          final index = entry.key;
-          final value = (entry.value.value as num).toDouble();
-          final color = _chartColors[index % _chartColors.length];
-          final percent = (value / total) * 100;
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        PieChart(
+          PieChartData(
+            sectionsSpace: 4,
+            centerSpaceRadius: 70,
+            sections: _categoryTotals.entries.toList().asMap().entries.map((
+              entry,
+            ) {
+              final index = entry.key;
+              final value = (entry.value.value as num).toDouble();
+              final gradient = _chartGradients[index % _chartGradients.length];
+              final percent = (value / total) * 100;
 
-          return PieChartSectionData(
-            color: color,
-            value: value,
-            title: '${percent.toStringAsFixed(0)}%',
-            radius: 50,
-            titleStyle: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+              return PieChartSectionData(
+                gradient: LinearGradient(
+                  colors: gradient,
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                value: value,
+                title: '${percent.toStringAsFixed(0)}%',
+                radius: 40,
+                showTitle: percent > 5,
+                titleStyle: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'TOTAL',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey,
+                letterSpacing: 1.2,
+              ),
             ),
-          );
-        }).toList(),
-      ),
+            const SizedBox(height: 4),
+            Text(
+              CurrencyHelper.format(total),
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: widget.isDark ? Colors.white : Colors.blueGrey[900],
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -514,15 +571,19 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
         barGroups: entries.asMap().entries.map((entry) {
           final index = entry.key;
           final value = (entry.value.value as num).toDouble();
-          final color = _chartColors[index % _chartColors.length];
+          final gradient = _chartGradients[index % _chartGradients.length];
 
           return BarChartGroupData(
             x: index,
             barRods: [
               BarChartRodData(
                 toY: value,
-                color: color,
-                width: 16,
+                gradient: LinearGradient(
+                  colors: gradient,
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                ),
+                width: 18,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(6),
                 ),
