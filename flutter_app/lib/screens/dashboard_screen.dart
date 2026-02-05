@@ -503,26 +503,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 alignment: Alignment.centerLeft,
                                 child: PieChart(
                                   PieChartData(
+                                    sectionsSpace: 4,
+                                    centerSpaceRadius: 35,
                                     sections: categoryTotals.entries.map((
                                       entry,
                                     ) {
                                       final percentage =
                                           (entry.value / totalExpenses) * 100;
+                                      final colors = _getCategoryGradients(
+                                        entry.key,
+                                      );
                                       return PieChartSectionData(
-                                        color: _getCategoryColor(entry.key),
+                                        gradient: LinearGradient(
+                                          colors: colors,
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
                                         value: entry.value,
                                         title:
                                             '${percentage.toStringAsFixed(0)}%',
-                                        radius: 25, // Slightly bigger
+                                        radius: 30, // Slightly bigger
+                                        showTitle: percentage > 10,
                                         titleStyle: const TextStyle(
-                                          fontSize: 11,
+                                          fontSize: 10,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white,
                                         ),
                                       );
                                     }).toList(),
-                                    centerSpaceRadius: 35, // Bigger center
-                                    sectionsSpace: 2,
                                   ),
                                 ),
                               ),
@@ -615,36 +623,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Color _getCategoryColor(String category) {
+    return _getCategoryGradients(category)[0];
+  }
+
+  List<Color> _getCategoryGradients(String category) {
     switch (category.toLowerCase()) {
       case 'food':
-        return Colors.orange;
+        return [const Color(0xFFF97316), const Color(0xFFFB923C)]; // Orange
       case 'transport':
-        return Colors.blue;
+        return [const Color(0xFF3B82F6), const Color(0xFF60A5FA)]; // Blue
       case 'shopping':
-        return Colors.red;
+        return [const Color(0xFFEF4444), const Color(0xFFF87171)]; // Red
       case 'bills':
-        return Colors.indigo;
+        return [const Color(0xFF6366F1), const Color(0xFF818CF8)]; // Indigo
       case 'entertainment':
-        return Colors.pink;
+        return [const Color(0xFFEC4899), const Color(0xFFF472B6)]; // Pink
       case 'health':
-        return Colors.teal;
+        return [const Color(0xFF14B8A6), const Color(0xFF2DD4BF)]; // Teal
       case 'education':
-        return Colors.greenAccent;
+        return [const Color(0xFF8B5CF6), const Color(0xFFA78BFA)]; // Violet
       case 'groceries':
-        return Colors.green;
+        return [const Color(0xFF10B981), const Color(0xFF34D399)]; // Green
       case 'rent':
-        return Colors.brown;
+        return [const Color(0xFF78350F), const Color(0xFF92400E)]; // Brown
       case 'utilities':
-        return Colors.teal;
+        return [const Color(0xFF06B6D4), const Color(0xFF22D3EE)]; // Cyan
       case 'travel':
-        return Colors.lightBlue;
+        return [const Color(0xFF0EA5E9), const Color(0xFF38BDF8)]; // Sky
       case 'investments':
-        return Colors.cyan;
+        return [const Color(0xFF84CC16), const Color(0xFFA3E635)]; // Lime
       case 'other':
-        return Colors.grey;
+        return [const Color(0xFF64748B), const Color(0xFF94A3B8)]; // Gray
       default:
-        // Deterministic random color for unknown categories
-        return Colors.primaries[category.hashCode % Colors.primaries.length];
+        // Use a deterministic color pair based on hash
+        final index = category.hashCode % Colors.primaries.length;
+        final color = Colors.primaries[index];
+        return [color, color.withValues(alpha: 0.7)];
     }
   }
 }
