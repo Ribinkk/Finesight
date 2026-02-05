@@ -4,7 +4,15 @@ import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import '../models/user_model.dart';
 
 class AuthService {
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  FirebaseAuth get _firebaseAuth {
+    try {
+      return FirebaseAuth.instance;
+    } catch (e) {
+      debugPrint('Firebase not initialized, using mock auth behavior: $e');
+      rethrow;
+    }
+  }
+
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   // Get current user
@@ -21,15 +29,19 @@ class AuthService {
 
   // Stream of auth changes
   Stream<UserModel?> get authStateChanges {
-    return _firebaseAuth.authStateChanges().map((User? user) {
-      if (user == null) return null;
-      return UserModel(
-        uid: user.uid,
-        name: user.displayName ?? 'User',
-        email: user.email ?? '',
-        pictureUrl: user.photoURL,
-      );
-    });
+    try {
+      return _firebaseAuth.authStateChanges().map((User? user) {
+        if (user == null) return null;
+        return UserModel(
+          uid: user.uid,
+          name: user.displayName ?? 'User',
+          email: user.email ?? '',
+          pictureUrl: user.photoURL,
+        );
+      });
+    } catch (e) {
+      return Stream.value(null);
+    }
   }
 
   // Login with Google
@@ -85,8 +97,13 @@ class AuthService {
         pictureUrl: null,
       );
     } catch (e) {
-      debugPrint('Guest Login Error: $e');
-      rethrow;
+      debugPrint('Guest Login Error (using local guest): $e');
+      return UserModel(
+        uid: 'guest_user',
+        name: 'Guest User',
+        email: 'guest@finesight.app',
+        pictureUrl: null,
+      );
     }
   }
 

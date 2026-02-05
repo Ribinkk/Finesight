@@ -14,7 +14,7 @@ class ApiService {
   // NOTE: Change this IP to your computer's IP address if running on a physical device.
   // Use http://10.0.2.2:3001/api for Android Emulator.
   // Use http://localhost:3001/api for iOS Simulator.
-  static const String _defaultLocalUrl = 'http://10.0.2.2:3001/api';
+  static const String _defaultLocalUrl = 'http://10.102.240.158:3001/api';
 
   // Platform-specific base URL
   static String get baseUrl {
