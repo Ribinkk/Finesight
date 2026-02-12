@@ -1,7 +1,7 @@
 {
   "name": "finesight-backend",
   "version": "1.0.0",
-  "description": "Finesight Expense Tracker Backend API",
+  "description": "Finesight Expense Tracker Backend with MongoDB",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -10,7 +10,10 @@
   "keywords": [
     "expense",
     "tracker",
-    "api"
+    "api",
+    "finance",
+    "mongodb",
+    "personal-finance"
   ],
   "author": "",
   "license": "ISC",
@@ -24,9 +27,6 @@
     "express-validator": "^7.3.1",
     "helmet": "^8.1.0",
     "mongoose": "^8.21.1",
-    "node-cron": "^4.2.1",
-    "openai": "^6.16.0",
-    "pg": "^8.16.3",
-    "sqlite3": "^5.1.7"
+    "node-cron": "^4.2.1"
   }
 }
