@@ -609,6 +609,8 @@ router.post('/scan-receipt', async (req, res) => {
 });
 
 
+app.get('/', (req, res) => res.send('Finesight API is running'));
+
 app.use('/api', router); // Main entry point
 
 const PORT = process.env.PORT || 3001;
