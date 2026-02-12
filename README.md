@@ -16,11 +16,14 @@ A full-stack expense tracking application built with Flutter and Node.js.
 ### Frontend
 - **Flutter**: Cross-platform mobile/web framework
 - **Dart**: Programming language
+- **Provider**: State Management
 
 ### Backend
 - **Node.js**: Server runtime
 - **Express**: Web framework
-- **SQLite**: Database
+- **SQLite**: Database (Legacy)
+- **MongoDB**: Primary Database
+- **Mongoose**: ODM Library
 
 ## Project Structure
 
