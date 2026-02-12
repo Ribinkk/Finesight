@@ -215,7 +215,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
               try {
                 await ApiService.addExpense(expense, widget.user?.uid ?? '');
-                if (mounted) {
+                if (mounted && context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -225,7 +225,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   );
                 }
               } catch (e) {
-                if (mounted) {
+                if (mounted && context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Failed: $e'),
