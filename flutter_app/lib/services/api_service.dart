@@ -14,7 +14,7 @@ class ApiService {
   // NOTE: Change this IP to your computer's IP address if running on a physical device.
   // Use http://10.0.2.2:3001/api for Android Emulator.
   // Use http://localhost:3001/api for iOS Simulator.
-  static const String _defaultLocalUrl = 'http://10.102.240.158:3001/api';
+  static const String _defaultLocalUrl = 'http://localhost:3001/api';
 
   // Platform-specific base URL
   static String get baseUrl {
@@ -34,9 +34,9 @@ class ApiService {
   // --- Expenses ---
   static Future<List<Expense>> getExpenses(String userId) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/expenses?user_id=$userId'),
-      );
+      final response = await http
+          .get(Uri.parse('$baseUrl/expenses?user_id=$userId'))
+          .timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
         final List<dynamic> expensesJson = data['data'];
@@ -101,12 +101,35 @@ class ApiService {
     }
   }
 
+  static Future<void> updateExpense(Expense expense, String userId) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/expenses/${expense.id}?user_id=$userId'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'title': expense.title,
+          'amount': expense.amount,
+          'category': expense.category,
+          'date': expense.date.toIso8601String(),
+          'paymentMethod': expense.paymentMethod,
+          'description': expense.description,
+        }),
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update expense');
+      }
+    } catch (e) {
+      debugPrint('Error updating expense: $e');
+      rethrow;
+    }
+  }
+
   // --- Payments ---
   static Future<List<Payment>> getPayments(String userId) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/payments?user_id=$userId'),
-      );
+      final response = await http
+          .get(Uri.parse('$baseUrl/payments?user_id=$userId'))
+          .timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
         final List<dynamic> paymentsJson = data['data'];
@@ -155,9 +178,9 @@ class ApiService {
   // --- Incomes ---
   static Future<List<Income>> getIncomes(String userId) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/incomes?user_id=$userId'),
-      );
+      final response = await http
+          .get(Uri.parse('$baseUrl/incomes?user_id=$userId'))
+          .timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
         final List<dynamic> incomesJson = data['data'];
@@ -551,9 +574,12 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return data['reply'];
+        return data['reply'] ?? 'No reply from AI';
       } else {
-        throw Exception('Failed to get response from AI');
+        final errorData = json.decode(response.body);
+        throw Exception(
+          errorData['details'] ?? errorData['error'] ?? 'Server error',
+        );
       }
     } catch (e) {
       debugPrint('Error chatting with AI: $e');
