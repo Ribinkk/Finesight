@@ -86,7 +86,7 @@ class _ReminderScreenState extends State<ReminderScreen> {
       child: SwitchListTile(
         value: value,
         onChanged: onChanged,
-        activeThumbColor: const Color(0xFF009B6E),
+        activeThumbColor: Theme.of(context).primaryColor,
         title: Text(
           title,
           style: TextStyle(

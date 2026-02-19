@@ -129,7 +129,7 @@ class _DebtScreenState extends State<DebtScreen>
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
                                 color: selectedType == 'Lent'
-                                    ? const Color(0xFF10B981)
+                                    ? Theme.of(context).primaryColor
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -311,7 +311,7 @@ class _DebtScreenState extends State<DebtScreen>
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: selectedType == 'Lent'
-                      ? const Color(0xFF10B981)
+                      ? Theme.of(context).primaryColor
                       : const Color(0xFFE11D48),
                   foregroundColor: Colors.white,
                 ),
@@ -388,7 +388,7 @@ class _DebtScreenState extends State<DebtScreen>
   Widget _buildDebtList(String type) {
     final filtered = _debts.where((d) => d.type == type).toList();
     final color = type == 'Lent'
-        ? const Color(0xFF10B981)
+        ? Theme.of(context).primaryColor
         : const Color(0xFFE11D48);
 
     if (filtered.isEmpty) {
@@ -561,7 +561,7 @@ class _DebtScreenState extends State<DebtScreen>
           controller: _tabController,
           labelColor: widget.isDark ? Colors.white : Colors.black,
           unselectedLabelColor: Colors.grey,
-          indicatorColor: const Color(0xFF009B6E),
+          indicatorColor: Theme.of(context).primaryColor,
           indicatorSize: TabBarIndicatorSize.label,
           tabs: const [
             Tab(text: 'Lent (Assets)'),
@@ -573,7 +573,7 @@ class _DebtScreenState extends State<DebtScreen>
         onPressed: () => _showAddEditDialog(
           initialType: _tabController.index == 0 ? 'Lent' : 'Borrowed',
         ),
-        backgroundColor: const Color(0xFF009B6E),
+        backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
         icon: const Icon(LucideIcons.plus),
         label: const Text('Add Record'),
@@ -590,7 +590,7 @@ class _DebtScreenState extends State<DebtScreen>
                         child: _buildSummaryCard(
                           'Owed to You',
                           totalLent,
-                          const Color(0xFF10B981),
+                          Theme.of(context).primaryColor,
                           LucideIcons.arrowUpRight,
                         ),
                       ),

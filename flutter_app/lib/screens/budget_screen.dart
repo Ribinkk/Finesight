@@ -186,7 +186,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF009B6E),
+              backgroundColor: Theme.of(context).primaryColor,
               foregroundColor: Colors.white,
             ),
             child: const Text('Save'),
@@ -227,15 +227,20 @@ class _BudgetScreenState extends State<BudgetScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF009B6E), Color(0xFF00E5A7)],
+                      gradient: LinearGradient(
+                        colors: [
+                          Theme.of(context).primaryColor,
+                          Theme.of(context).primaryColor.withValues(alpha: 0.7),
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF009B6E).withValues(alpha: 0.3),
+                          color: Theme.of(
+                            context,
+                          ).primaryColor.withValues(alpha: 0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 8),
                         ),
@@ -341,7 +346,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                       IconButton(
                         onPressed: () => _showSetBudgetDialog(),
                         icon: const Icon(LucideIcons.plusCircle),
-                        color: const Color(0xFF009B6E),
+                        color: Theme.of(context).primaryColor,
                       ),
                     ],
                   ),
@@ -438,12 +443,13 @@ class _BudgetScreenState extends State<BudgetScreen> {
                                           ? const Color(0xFFE74C3C)
                                           : progress > 0.8
                                           ? const Color(0xFFFF9F43)
-                                          : const Color(0xFF009B6E),
+                                          : Theme.of(context).primaryColor,
                                       isOverBudget
                                           ? const Color(0xFFC0392B)
                                           : progress > 0.8
                                           ? const Color(0xFFFF6B6B)
-                                          : const Color(0xFF00E5A7),
+                                          : Theme.of(context).primaryColor
+                                                .withValues(alpha: 0.7),
                                     ],
                                   ),
                                   borderRadius: BorderRadius.circular(10),

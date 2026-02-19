@@ -96,7 +96,7 @@ class ExportService {
                 .toList(),
             headerStyle: pw.TextStyle(font: boldFont, color: PdfColors.white),
             headerDecoration: const pw.BoxDecoration(
-              color: PdfColor.fromInt(0xFF009B6E),
+              color: PdfColor.fromInt(0xFF00E5FF),
             ),
             cellStyle: pw.TextStyle(font: font, fontSize: 10),
             cellAlignments: {

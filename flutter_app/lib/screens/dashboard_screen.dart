@@ -185,7 +185,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF8B5CF6),
+                            color: Theme.of(context).primaryColor,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -409,8 +409,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Colors.green, Colors.teal],
+                            gradient: LinearGradient(
+                              colors: [
+                                Theme.of(context).primaryColor,
+                                Theme.of(
+                                  context,
+                                ).primaryColor.withValues(alpha: 0.7),
+                              ],
                             ), // emerald equivalent
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -473,9 +478,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         Icon(
                           LucideIcons.pieChart,
-                          color: widget.isDark
-                              ? Colors.green.shade300
-                              : Colors.green,
+                          color: Theme.of(context).primaryColor,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -643,7 +646,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 'education':
         return [const Color(0xFF8B5CF6), const Color(0xFFA78BFA)]; // Violet
       case 'groceries':
-        return [const Color(0xFF10B981), const Color(0xFF34D399)]; // Green
+        return [
+          Theme.of(context).primaryColor,
+          Theme.of(context).primaryColor.withValues(alpha: 0.7),
+        ]; // Cyan/Greenish match primary
       case 'rent':
         return [const Color(0xFF78350F), const Color(0xFF92400E)]; // Brown
       case 'utilities':

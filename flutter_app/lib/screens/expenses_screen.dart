@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
+import '../utils/currency_helper.dart';
 import '../models/expense.dart';
 import '../models/income.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,8 +14,11 @@ class ExpensesScreen extends StatefulWidget {
   final Function(Expense) onAdd;
   final Function(Income) onAddIncome;
   final Function(String) onDelete;
+  final Function(Expense)? onEdit; // New callback for editing
+  final Expense? expenseToEdit; // New parameter for the expense to edit
   final bool isDark;
   final List<String> categories;
+  final String? initialType;
 
   const ExpensesScreen({
     super.key,
@@ -22,12 +26,12 @@ class ExpensesScreen extends StatefulWidget {
     required this.onAdd,
     required this.onAddIncome,
     required this.onDelete,
+    this.onEdit,
+    this.expenseToEdit,
     required this.isDark,
     required this.categories,
     this.initialType,
   });
-
-  final String? initialType;
 
   @override
   State<ExpensesScreen> createState() => _ExpensesScreenState();
@@ -42,7 +46,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
   String _selectedCategory = 'Food';
-  String? _selectedSubcategory; // New: for subcategory selection
+  String? _selectedSubcategory;
   String _selectedAccount = 'Cash';
 
   // Data Lists
@@ -123,7 +127,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     [const Color(0xFF0EA5E9), const Color(0xFF38BDF8)], // Sky
     [const Color(0xFF06B6D4), const Color(0xFF22D3EE)], // Cyan
     [const Color(0xFF14B8A6), const Color(0xFF2DD4BF)], // Teal
-    [const Color(0xFF10B981), const Color(0xFF34D399)], // Emerald
+    // Dynamic gradient will be added in build if needed,
+    // but for now let's just use the ones defined.
+    // Actually, I'll update the specific index in build if I want it truly dynamic.
+    [
+      const Color(0xFF00E5FF),
+      const Color(0xFF00B8D4),
+    ], // Cyan (Primary) fallback
     [const Color(0xFF22C55E), const Color(0xFF4ADE80)], // Green
     [const Color(0xFF84CC16), const Color(0xFFA3E635)], // Lime
     [const Color(0xFFEAB308), const Color(0xFFFACC15)], // Yellow
@@ -157,11 +167,46 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   void initState() {
     super.initState();
     _categories = List.from(widget.categories);
-    if (_categories.isNotEmpty) {
-      _selectedCategory = _categories.first;
-    }
-    if (widget.initialType != null) {
-      _type = widget.initialType!;
+
+    // Check if we are editing an expense
+    if (widget.expenseToEdit != null) {
+      final expense = widget.expenseToEdit!;
+      _type = 'Expense';
+      _titleController.text = expense.title;
+      _amountController.text = expense.amount.toString();
+      _descriptionController.text = expense.description ?? '';
+      _selectedDate = expense.date;
+      _selectedTime = TimeOfDay.fromDateTime(expense.date);
+
+      // Parse Category (Format: "Main - Sub" or "Main")
+      if (expense.category.contains(' - ')) {
+        final parts = expense.category.split(' - ');
+        _selectedCategory = parts[0];
+        if (parts.length > 1) {
+          _selectedSubcategory = parts[1];
+        }
+      } else {
+        _selectedCategory = expense.category;
+      }
+
+      // Map payment method
+      if (expense.paymentMethod == 'UPI') {
+        _selectedAccount = 'Bank Account';
+      } else {
+        if (_accounts.contains(expense.paymentMethod)) {
+          _selectedAccount = expense.paymentMethod;
+        } else {
+          _selectedAccount = 'Cash'; // Default fallback
+        }
+      }
+    } else {
+      // Default initialization for new entry
+      if (_categories.isNotEmpty) {
+        _selectedCategory = _categories.first;
+      }
+      if (widget.initialType != null) {
+        _type = widget.initialType!;
+      }
     }
   }
 
@@ -201,17 +246,29 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           ? '$_selectedCategory - $_selectedSubcategory'
           : _selectedCategory;
 
-      widget.onAdd(
-        Expense(
-          id: DateTime.now().toString(),
-          title: enteredTitle,
-          amount: enteredAmount,
-          category: categoryLabel,
-          date: combinedDateTime,
-          paymentMethod: paymentMethod,
-          description: enteredDescription,
-        ),
+      final expense = Expense(
+        id:
+            widget.expenseToEdit?.id ??
+            DateTime.now().toString(), // Use existing ID if editing
+        title: enteredTitle,
+        amount: enteredAmount,
+        category: categoryLabel,
+        date: combinedDateTime,
+        paymentMethod: paymentMethod,
+        description: enteredDescription,
       );
+
+      if (widget.expenseToEdit != null && widget.onEdit != null) {
+        widget.onEdit!(expense);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Expense Updated!')));
+      } else {
+        widget.onAdd(expense);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Expense Added!')));
+      }
     } else {
       widget.onAddIncome(
         Income(
@@ -224,12 +281,12 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               : enteredDescription,
         ),
       );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Income Added!')));
     }
 
     if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('$_type Added!')));
       Navigator.of(context).pop();
     }
   }
@@ -270,12 +327,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         _selectedTime = pickedTime;
       });
     });
-  }
-
-  void _showAddAccountDialog() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Add Account Feature Coming Soon!")),
-    );
   }
 
   Future<void> _scanReceipt() async {
@@ -339,7 +390,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CircularProgressIndicator(color: Colors.green),
+              CircularProgressIndicator(color: Theme.of(context).primaryColor),
               const SizedBox(height: 16),
               const Text(
                 'Scanning Receipt...',
@@ -397,9 +448,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Receipt Scanned! Data pre-filled.'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Receipt Scanned! Data pre-filled.'),
+            backgroundColor: Theme.of(context).primaryColor,
           ),
         );
       } else {
@@ -413,7 +464,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     }
   }
 
-  void _showAddCategoryDialog() {
+  void _showAddCategoryDialog(List<List<Color>> dynamicGradients) {
     final categoryController = TextEditingController();
     Color tempColor = _availableGradients.first[0];
     IconData tempIcon = _availableIcons.first;
@@ -476,9 +527,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     height: 48,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      itemCount: _availableGradients.length,
+                      itemCount: dynamicGradients.length,
                       itemBuilder: (ctx, index) {
-                        final gradient = _availableGradients[index];
+                        final gradient = dynamicGradients[index];
                         final isSelected = tempColor == gradient[0];
                         return GestureDetector(
                           onTap: () =>
@@ -604,7 +655,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF009B6E),
+                  backgroundColor: Theme.of(context).primaryColor,
                   foregroundColor: Colors.white,
                 ),
                 child: const Text("Add"),
@@ -620,6 +671,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   Widget build(BuildContext context) {
     bool isExpense = _type == 'Expense';
     final primaryColor = Theme.of(context).primaryColor;
+
+    // Update the Primary/Cyan gradient dynamically
+    final dynamicGradients = List<List<Color>>.from(_availableGradients);
+    dynamicGradients[9] = [primaryColor, primaryColor.withValues(alpha: 0.7)];
+
     Color activeColor = isExpense ? Colors.redAccent : primaryColor;
     Color bgColor = widget.isDark
         ? const Color(0xFF020617)
@@ -632,7 +688,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       backgroundColor: bgColor,
       appBar: AppBar(
         title: Text(
-          'Add Transaction',
+          widget.expenseToEdit != null
+              ? 'Update Transaction'
+              : 'Add Transaction',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.bold,
             color: textColor,
@@ -649,9 +707,12 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           if (isExpense)
             TextButton.icon(
               onPressed: _scanReceipt,
-              icon: const Icon(LucideIcons.scanLine, size: 20),
-              label: const Text("Scan Receipt"),
-              style: TextButton.styleFrom(foregroundColor: textColor),
+              icon: Icon(LucideIcons.scanLine, size: 20, color: primaryColor),
+              label: Text(
+                "Scan Receipt",
+                style: TextStyle(color: primaryColor),
+              ),
+              style: TextButton.styleFrom(foregroundColor: primaryColor),
             ),
           const SizedBox(width: 8),
         ],
@@ -738,7 +799,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 fontWeight: FontWeight.bold,
               ),
               decoration: InputDecoration(
-                prefixText: '₹ ',
+                prefixText:
+                    '${CurrencyHelper.symbols[CurrencyHelper.selectedCurrency] ?? '₹'} ',
                 prefixStyle: TextStyle(
                   color: textColor,
                   fontSize: 32,
@@ -874,9 +936,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: IconButton(
-                    onPressed: _showAddAccountDialog,
-                    icon: const Icon(LucideIcons.plus),
-                    color: activeColor,
+                    onPressed: () => _showAddCategoryDialog(dynamicGradients),
+                    icon: const Icon(LucideIcons.plusCircle),
+                    color: Theme.of(context).primaryColor,
                   ),
                 ),
               ],
@@ -897,7 +959,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     ),
                   ),
                   TextButton.icon(
-                    onPressed: _showAddCategoryDialog,
+                    onPressed: () => _showAddCategoryDialog(dynamicGradients),
                     icon: const Icon(LucideIcons.plus, size: 16),
                     label: const Text("Add New"),
                     style: TextButton.styleFrom(foregroundColor: activeColor),
@@ -1035,14 +1097,14 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             ElevatedButton(
               onPressed: _submitData,
               style: ElevatedButton.styleFrom(
-                backgroundColor: activeColor,
+                backgroundColor: primaryColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: 8,
-                shadowColor: activeColor.withValues(alpha: 0.4),
+                shadowColor: primaryColor.withValues(alpha: 0.4),
               ),
               child: Text(
                 isExpense ? 'Add Expense' : 'Add Income',

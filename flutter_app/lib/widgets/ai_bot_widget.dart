@@ -62,7 +62,7 @@ class _AIBotWidgetState extends State<AIBotWidget> {
           _messages.add({
             "role": "assistant",
             "content":
-                "Error: Could not connect to Finesight Core. Please ensure the backend server is running.",
+                "Error: $e\n\nPlease ensure your Gemini API key is valid and the backend server is running.",
           });
         });
       }
@@ -104,7 +104,7 @@ class _AIBotWidgetState extends State<AIBotWidget> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF009B6E),
+                      color: Theme.of(context).primaryColor,
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(24),
                       ),
@@ -122,7 +122,7 @@ class _AIBotWidgetState extends State<AIBotWidget> {
                           child: Center(
                             child: Icon(
                               LucideIcons.bot,
-                              color: const Color(0xFF009B6E),
+                              color: Theme.of(context).primaryColor,
                               size: 20,
                             ),
                           ),
@@ -203,7 +203,7 @@ class _AIBotWidgetState extends State<AIBotWidget> {
                                     margin: const EdgeInsets.only(bottom: 8),
                                     decoration: BoxDecoration(
                                       color: isUser
-                                          ? const Color(0xFF009B6E)
+                                          ? Theme.of(context).primaryColor
                                           : (widget.isDark
                                                 ? const Color(0xFF334155)
                                                 : Colors.grey.shade100),
@@ -280,7 +280,7 @@ class _AIBotWidgetState extends State<AIBotWidget> {
                           onPressed: _sendMessage,
                           icon: const Icon(LucideIcons.send),
                           style: IconButton.styleFrom(
-                            backgroundColor: const Color(0xFF009B6E),
+                            backgroundColor: Theme.of(context).primaryColor,
                             foregroundColor: Colors.white,
                           ),
                         ),
@@ -349,7 +349,7 @@ class _AIBotWidgetState extends State<AIBotWidget> {
                             child: Icon(
                               LucideIcons.arrowRightCircle,
                               size: 16,
-                              color: const Color(0xFF009B6E),
+                              color: Theme.of(context).primaryColor,
                             ),
                           ),
                         ],
@@ -367,13 +367,13 @@ class _AIBotWidgetState extends State<AIBotWidget> {
                             width: 64,
                             height: 64,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF009B6E),
+                              color: Theme.of(context).primaryColor,
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(
-                                    0xFF009B6E,
-                                  ).withValues(alpha: 0.4),
+                                  color: Theme.of(
+                                    context,
+                                  ).primaryColor.withValues(alpha: 0.4),
                                   blurRadius: 16,
                                   offset: const Offset(0, 8),
                                 ),
@@ -409,17 +409,45 @@ class _AIBotWidgetState extends State<AIBotWidget> {
                                               Container(
                                                 width: 6,
                                                 height: 8,
-                                                decoration: const BoxDecoration(
-                                                  color: Color(0xFF00E5FF),
+                                                decoration: BoxDecoration(
+                                                  color: Color.lerp(
+                                                    Theme.of(
+                                                      context,
+                                                    ).primaryColor,
+                                                    Colors.white,
+                                                    0.5,
+                                                  ),
                                                   shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Theme.of(
+                                                        context,
+                                                      ).primaryColor,
+                                                      blurRadius: 4,
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                               Container(
                                                 width: 6,
                                                 height: 8,
-                                                decoration: const BoxDecoration(
-                                                  color: Color(0xFF00E5FF),
+                                                decoration: BoxDecoration(
+                                                  color: Color.lerp(
+                                                    Theme.of(
+                                                      context,
+                                                    ).primaryColor,
+                                                    Colors.white,
+                                                    0.5,
+                                                  ),
                                                   shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Theme.of(
+                                                        context,
+                                                      ).primaryColor,
+                                                      blurRadius: 4,
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                             ],

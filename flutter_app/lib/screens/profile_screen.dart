@@ -72,7 +72,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       suffixIcon: IconButton(
-                        icon: const Icon(LucideIcons.plus, color: Colors.green),
+                        icon: Icon(
+                          LucideIcons.plus,
+                          color: Theme.of(context).primaryColor,
+                        ),
                         onPressed: () {
                           if (categoryController.text.trim().isNotEmpty) {
                             widget.onAddCategory(
@@ -106,10 +109,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                 ),
                                 backgroundColor: isDark
-                                    ? Colors.green.shade900.withValues(
-                                        alpha: 0.5,
-                                      )
-                                    : Colors.green.shade50,
+                                    ? Theme.of(
+                                        context,
+                                      ).primaryColor.withValues(alpha: 0.5)
+                                    : Theme.of(
+                                        context,
+                                      ).primaryColor.withAlpha(50),
                                 side: BorderSide.none,
                               ),
                             )
@@ -123,9 +128,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text(
+                child: Text(
                   'Close',
-                  style: TextStyle(color: Colors.green),
+                  style: TextStyle(color: Theme.of(context).primaryColor),
                 ),
               ),
             ],
@@ -165,9 +170,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(
+                leading: Icon(
                   LucideIcons.fileSpreadsheet,
-                  color: Colors.green,
+                  color: Theme.of(context).primaryColor,
                 ),
                 title: Text(
                   'Export to CSV',
@@ -227,165 +232,138 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
 
-    return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF020617) : Colors.green.shade50,
-      appBar: AppBar(
-        title: const Text('Profile'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: isDark ? Colors.white : Colors.black,
-        actions: [
-          IconButton(
-            icon: const Icon(LucideIcons.settings),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => SettingsScreen(user: widget.user),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          CircleAvatar(
+            radius: 50,
+            backgroundImage: widget.user?.pictureUrl != null
+                ? NetworkImage(widget.user!.pictureUrl.toString())
+                : null,
+            child: widget.user?.pictureUrl == null
+                ? const Icon(LucideIcons.user, size: 50)
+                : null,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            widget.user?.name ?? 'Guest User',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Colors.black,
+            ),
+          ),
+          Text(
+            widget.user?.email ?? 'No email',
+            style: TextStyle(
+              color: isDark ? Colors.grey : Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 32),
+
+          // Feature Section
+          _buildSettingsTile(
+            context,
+            icon: LucideIcons.repeat,
+            title: 'Subscriptions',
+            isDark: isDark,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => RecurringScreen(
+                  user: widget.user,
+                  isDark: isDark,
+                  categories: widget.categories,
                 ),
-              );
+              ),
+            ),
+          ),
+          _buildSettingsTile(
+            context,
+            icon: LucideIcons.list,
+            title: 'Manage Categories',
+            isDark: isDark,
+            onTap: _showManageCategoriesDialog,
+          ),
+          _buildSettingsTile(
+            context,
+            icon: LucideIcons.download,
+            title: 'Export Data',
+            isDark: isDark,
+            onTap: _showExportDialog,
+          ),
+          _buildSettingsTile(
+            context,
+            icon: LucideIcons.users,
+            title: 'Split Expenses',
+            isDark: isDark,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SplitScreen(user: widget.user, isDark: isDark),
+              ),
+            ),
+          ),
+          _buildSettingsTile(
+            context,
+            icon: LucideIcons.target,
+            title: 'Savings Goals',
+            isDark: isDark,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => GoalsScreen(user: widget.user, isDark: isDark),
+              ),
+            ),
+          ),
+
+          // Settings Shortcut
+          _buildSettingsTile(
+            context,
+            icon: LucideIcons.settings,
+            title: 'App Settings',
+            isDark: isDark,
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'New',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SettingsScreen(user: widget.user),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            onPressed: () {
+              // Removed Navigator.pop as this is a tab, not a modal
+              widget.onLogout();
             },
+            icon: const Icon(LucideIcons.logOut),
+            label: const Text('Log Out'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade50,
+              foregroundColor: Colors.red,
+              minimumSize: const Size(double.infinity, 50),
+              elevation: 0,
+            ),
           ),
         ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            CircleAvatar(
-              radius: 50,
-              backgroundImage: widget.user?.pictureUrl != null
-                  ? NetworkImage(widget.user!.pictureUrl.toString())
-                  : null,
-              child: widget.user?.pictureUrl == null
-                  ? const Icon(LucideIcons.user, size: 50)
-                  : null,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              widget.user?.name ?? 'Guest User',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black,
-              ),
-            ),
-            Text(
-              widget.user?.email ?? 'No email',
-              style: TextStyle(
-                color: isDark ? Colors.grey : Colors.grey.shade600,
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // Feature Section
-            _buildSettingsTile(
-              context,
-              icon: LucideIcons.repeat,
-              title: 'Subscriptions',
-              isDark: isDark,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => RecurringScreen(
-                    user: widget.user,
-                    isDark: isDark,
-                    categories: widget.categories,
-                  ),
-                ),
-              ),
-            ),
-            // Moved Currency to SettingsScreen (Conceptually)
-            // Keeping "Manage Categories" here as it's content-related?
-            // Or maybe move to settings. Let's keep here for now as "Content Management"
-            _buildSettingsTile(
-              context,
-              icon: LucideIcons.list,
-              title: 'Manage Categories',
-              isDark: isDark,
-              onTap: _showManageCategoriesDialog,
-            ),
-            _buildSettingsTile(
-              context,
-              icon: LucideIcons.download,
-              title: 'Export Data',
-              isDark: isDark,
-              onTap: _showExportDialog,
-            ),
-            _buildSettingsTile(
-              context,
-              icon: LucideIcons.users,
-              title: 'Split Expenses',
-              isDark: isDark,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      SplitScreen(user: widget.user, isDark: isDark),
-                ),
-              ),
-            ),
-            _buildSettingsTile(
-              context,
-              icon: LucideIcons.target,
-              title: 'Savings Goals',
-              isDark: isDark,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      GoalsScreen(user: widget.user, isDark: isDark),
-                ),
-              ),
-            ),
-
-            // Settings Shortcut
-            _buildSettingsTile(
-              context,
-              icon: LucideIcons.settings,
-              title: 'App Settings',
-              isDark: isDark,
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text(
-                  'New',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.red,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => SettingsScreen(user: widget.user),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close Profile Screen first
-                widget.onLogout();
-              },
-              icon: const Icon(LucideIcons.logOut),
-              label: const Text('Log Out'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade50,
-                foregroundColor: Colors.red,
-                minimumSize: const Size(double.infinity, 50),
-                elevation: 0,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

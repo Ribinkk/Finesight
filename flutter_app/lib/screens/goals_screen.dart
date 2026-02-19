@@ -62,7 +62,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
     final titleController = TextEditingController();
     final amountController = TextEditingController();
     DateTime selectedDate = DateTime.now().add(const Duration(days: 30));
-    Color selectedColor = Colors.green;
+    Color selectedColor = Theme.of(context).primaryColor;
 
     await showDialog(
       context: context,
@@ -197,7 +197,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF009B6E),
+                  backgroundColor: Theme.of(context).primaryColor,
                   foregroundColor: Colors.white,
                 ),
                 child: const Text('Save'),
@@ -275,7 +275,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF009B6E),
+              backgroundColor: Theme.of(context).primaryColor,
               foregroundColor: Colors.white,
             ),
             child: const Text('Add'),
@@ -317,7 +317,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addGoal,
-        backgroundColor: const Color(0xFF009B6E),
+        backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
         icon: const Icon(LucideIcons.plus),
         label: const Text('New Goal'),
@@ -502,12 +502,12 @@ class _GoalsScreenState extends State<GoalsScreen> {
                                           ),
                                           label: const Text('Add Funds'),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(
-                                              0xFF009B6E,
-                                            ).withValues(alpha: 0.1),
-                                            foregroundColor: const Color(
-                                              0xFF009B6E,
-                                            ),
+                                            backgroundColor: Theme.of(context)
+                                                .primaryColor
+                                                .withValues(alpha: 0.1),
+                                            foregroundColor: Theme.of(
+                                              context,
+                                            ).primaryColor,
                                             elevation: 0,
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 16,

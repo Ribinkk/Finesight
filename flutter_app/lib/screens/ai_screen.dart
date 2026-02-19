@@ -109,7 +109,7 @@ class _AIScreenState extends State<AIScreen> {
         setState(() {
           _messages.add({
             'role': 'assistant',
-            'content': 'Sorry, I encountered an error. Please try again.',
+            'content': 'Error: $e\n\nPlease try again later.',
           });
           _isLoading = false;
         });
@@ -151,7 +151,7 @@ class _AIScreenState extends State<AIScreen> {
             children: [
               Icon(
                 LucideIcons.sparkles,
-                color: const Color(0xFF009B6E),
+                color: Theme.of(context).primaryColor,
                 size: 24,
               ),
               const SizedBox(width: 12),
@@ -210,7 +210,7 @@ class _AIScreenState extends State<AIScreen> {
                   ),
                   decoration: BoxDecoration(
                     color: isUser
-                        ? const Color(0xFF10B981)
+                        ? Theme.of(context).primaryColor
                         : (widget.isDark
                               ? const Color(0xFF334155)
                               : Colors.white),
@@ -279,8 +279,8 @@ class _AIScreenState extends State<AIScreen> {
               ),
               const SizedBox(width: 8),
               Container(
-                decoration: const BoxDecoration(
-                  color: Color(0xFF10B981),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(

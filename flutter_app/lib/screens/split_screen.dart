@@ -190,7 +190,7 @@ class _SplitScreenState extends State<SplitScreen> {
                       value: selectedFriends[f],
                       onChanged: (val) =>
                           setDialogState(() => selectedFriends[f] = val!),
-                      activeColor: const Color(0xFF009B6E),
+                      activeColor: Theme.of(context).primaryColor,
                       checkColor: Colors.white,
                       contentPadding: EdgeInsets.zero,
                       dense: true,
@@ -201,7 +201,7 @@ class _SplitScreenState extends State<SplitScreen> {
                     'Per person: ₹${splitAmount.toStringAsFixed(2)}',
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF009B6E),
+                      color: Theme.of(context).primaryColor,
                     ),
                   ),
                 ],
@@ -260,7 +260,7 @@ class _SplitScreenState extends State<SplitScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF009B6E),
+                  backgroundColor: Theme.of(context).primaryColor,
                   foregroundColor: Colors.white,
                 ),
                 child: const Text('Save'),
@@ -307,7 +307,7 @@ class _SplitScreenState extends State<SplitScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addSplit,
-        backgroundColor: const Color(0xFF009B6E),
+        backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
         icon: const Icon(LucideIcons.plus),
         label: const Text('New Split'),
@@ -352,7 +352,7 @@ class _SplitScreenState extends State<SplitScreen> {
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: _splits.length,
-              itemBuilder: (context, index) {
+              itemBuilder: (itemContext, index) {
                 final split = _splits[index];
                 final youPaid = split.payer == 'You';
 
@@ -370,126 +370,190 @@ class _SplitScreenState extends State<SplitScreen> {
                     ),
                     child: const Icon(LucideIcons.trash2, color: Colors.white),
                   ),
-                  child:
-                      Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            color: widget.isDark
-                                ? const Color(0xFF1E293B)
-                                : Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(
-                                color: widget.isDark
-                                    ? Colors.transparent
-                                    : Colors.grey.shade200,
-                              ),
+                  child: Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    color: widget.isDark
+                        ? const Color(0xFF1E293B)
+                        : Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(
+                        color: widget.isDark
+                            ? Colors.transparent
+                            : Colors.grey.shade200,
+                      ),
+                    ),
+                    elevation: 0,
+                    child: ExpansionTile(
+                      shape: Border(),
+                      tilePadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      leading: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: youPaid
+                              ? Theme.of(
+                                  context,
+                                ).primaryColor.withValues(alpha: 0.1)
+                              : Colors.orange.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          youPaid
+                              ? LucideIcons.arrowUpRight
+                              : LucideIcons.arrowDownLeft,
+                          color: youPaid
+                              ? Theme.of(context).primaryColor
+                              : Colors.orange,
+                        ),
+                      ),
+                      title: Text(
+                        split.description,
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: widget.isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                      subtitle: Text(
+                        youPaid
+                            ? 'You paid ₹${split.totalAmount}'
+                            : '${split.payer} paid ₹${split.totalAmount}',
+                        style: TextStyle(
+                          color: widget.isDark
+                              ? Colors.white54
+                              : Colors.grey.shade600,
+                        ),
+                      ),
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            youPaid ? 'You lent' : 'You owe',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: widget.isDark
+                                  ? Colors.white54
+                                  : Colors.grey.shade400,
                             ),
-                            elevation: 0,
-                            child: ExpansionTile(
-                              shape: Border(),
-                              tilePadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              leading: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: youPaid
-                                      ? Colors.green.withValues(alpha: 0.1)
-                                      : Colors.orange.withValues(alpha: 0.1),
-                                  shape: BoxShape.circle,
+                          ),
+                          Text(
+                            '₹${(split.totalAmount / (split.splits.length + 1)).toStringAsFixed(0)}', // Approx
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: youPaid
+                                  ? Theme.of(context).primaryColor
+                                  : Colors.orange,
+                            ),
+                          ),
+                        ],
+                      ),
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: split.splits.asMap().entries.map((entry) {
+                              final pIndex = entry.key;
+                              final s = entry.value;
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 4,
                                 ),
-                                child: Icon(
-                                  youPaid
-                                      ? LucideIcons.arrowUpRight
-                                      : LucideIcons.arrowDownLeft,
-                                  color: youPaid ? Colors.green : Colors.orange,
-                                ),
-                              ),
-                              title: Text(
-                                split.description,
-                                style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: widget.isDark
-                                      ? Colors.white
-                                      : Colors.black,
-                                ),
-                              ),
-                              subtitle: Text(
-                                youPaid
-                                    ? 'You paid ₹${split.totalAmount}'
-                                    : '${split.payer} paid ₹${split.totalAmount}',
-                                style: TextStyle(
-                                  color: widget.isDark
-                                      ? Colors.white54
-                                      : Colors.grey.shade600,
-                                ),
-                              ),
-                              trailing: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    youPaid ? 'You lent' : 'You owe',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: widget.isDark
-                                          ? Colors.white54
-                                          : Colors.grey.shade400,
-                                    ),
-                                  ),
-                                  Text(
-                                    '₹${(split.totalAmount / (split.splits.length + 1)).toStringAsFixed(0)}', // Approx
-                                    style: GoogleFonts.outfit(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: youPaid
-                                          ? Colors.green
-                                          : Colors.orange,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    children: split.splits
-                                        .map(
-                                          (s) => Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                s.personName,
-                                                style: TextStyle(
-                                                  color: widget.isDark
-                                                      ? Colors.white70
-                                                      : Colors.black87,
-                                                ),
-                                              ),
-                                              Text(
-                                                'owes ₹${s.amountOwed.toStringAsFixed(0)}',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: s.isPaid
-                                                      ? Colors.green
-                                                      : Colors.redAccent,
-                                                ),
-                                              ),
-                                            ],
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Checkbox(
+                                          value: s.isPaid,
+                                          activeColor: Theme.of(
+                                            context,
+                                          ).primaryColor,
+                                          onChanged: (val) async {
+                                            if (val == null) return;
+                                            // Update local state temporarily
+                                            setState(() {
+                                              s.isPaid = val;
+                                            });
+
+                                            // Create updated split object
+                                            List<SplitPerson> updatedSplits =
+                                                List.from(split.splits);
+                                            updatedSplits[pIndex] = SplitPerson(
+                                              personName: s.personName,
+                                              amountOwed: s.amountOwed,
+                                              isPaid: val,
+                                            );
+
+                                            final updatedSplit = SplitExpense(
+                                              id: split.id,
+                                              userId: split.userId,
+                                              description: split.description,
+                                              totalAmount: split.totalAmount,
+                                              payer: split.payer,
+                                              splits: updatedSplits,
+                                              date: split.date,
+                                            );
+
+                                            try {
+                                              await ApiService.updateSplitExpense(
+                                                updatedSplit,
+                                              );
+                                              // Reload to ensure sync
+                                              _loadData();
+                                            } catch (e) {
+                                              if (mounted && context.mounted) {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      'Failed to update: $e',
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            }
+                                          },
+                                        ),
+                                        Text(
+                                          s.personName,
+                                          style: TextStyle(
+                                            color: widget.isDark
+                                                ? Colors.white70
+                                                : Colors.black87,
+                                            decoration: s.isPaid
+                                                ? TextDecoration.lineThrough
+                                                : null,
                                           ),
-                                        )
-                                        .toList(),
-                                  ),
+                                        ),
+                                      ],
+                                    ),
+                                    Text(
+                                      s.isPaid
+                                          ? 'PAID'
+                                          : 'owes ₹${s.amountOwed.toStringAsFixed(0)}',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: s.isPaid
+                                            ? Theme.of(context).primaryColor
+                                            : Colors.redAccent,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          )
-                          .animate()
-                          .fade(duration: 400.ms)
-                          .slideX(begin: 0.2, end: 0, delay: (100 * index).ms),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ).animate().fade(duration: 400.ms).slideX(begin: 0.2, end: 0, delay: (100 * index).ms),
                 );
               },
             ),

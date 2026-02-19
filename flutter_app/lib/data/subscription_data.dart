@@ -487,7 +487,7 @@ class SubscriptionData {
       );
       return service.color;
     } catch (_) {
-      return const Color(0xFF009B6E);
+      return const Color(0xFF00E5FF); // Default Cyan match primary
     }
   }
 }

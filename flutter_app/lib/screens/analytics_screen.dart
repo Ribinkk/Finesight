@@ -29,7 +29,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   // Modern Gradient Palette
   final List<List<Color>> _chartGradients = [
     [const Color(0xFF6366F1), const Color(0xFF818CF8)], // Indigo
-    [const Color(0xFF10B981), const Color(0xFF34D399)], // Emerald
+    [const Color(0xFF00E5FF), const Color(0xFF00B8D4)], // Cyan (Primary)
     [const Color(0xFFF59E0B), const Color(0xFFFBBF24)], // Amber
     [const Color(0xFFEF4444), const Color(0xFFF87171)], // Red
     [const Color(0xFFEC4899), const Color(0xFFF472B6)], // Pink
@@ -92,12 +92,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 indicator: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
                   color: const Color(0xFF0F172A), // Dark accents
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF10B981), Color(0xFF059669)],
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).primaryColor,
+                      Theme.of(context).primaryColor.withValues(alpha: 0.8),
+                    ],
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                      color: Theme.of(
+                        context,
+                      ).primaryColor.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -396,8 +401,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                     }),
                     isCurved: true,
                     curveSmoothness: 0.35,
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF10B981), Color(0xFF059669)],
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context).primaryColor,
+                        Theme.of(context).primaryColor.withValues(alpha: 0.8),
+                      ],
                     ),
                     barWidth: 4,
                     isStrokeCapRound: true,
@@ -406,7 +414,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                       getDotPainter: (spot, percent, barData, index) {
                         return FlDotCirclePainter(
                           radius: 5,
-                          color: const Color(0xFF10B981),
+                          color: Theme.of(context).primaryColor,
                           strokeWidth: 3,
                           strokeColor: Colors.white,
                         );
@@ -416,8 +424,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                       show: true,
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFF10B981).withValues(alpha: 0.3),
-                          const Color(0xFF10B981).withValues(alpha: 0.0),
+                          Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                          Theme.of(context).primaryColor.withValues(alpha: 0.0),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -631,7 +639,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         margin: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF10B981) : Colors.transparent,
+          color: isSelected
+              ? Theme.of(context).primaryColor
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(

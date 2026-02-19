@@ -9,12 +9,14 @@ import '../models/payment.dart';
 import '../models/income.dart';
 import '../services/api_service.dart';
 import '../providers/theme_provider.dart';
+import '../utils/currency_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'dashboard_screen.dart';
 import 'expenses_screen.dart';
 import 'payments_screen.dart';
 import 'history_screen.dart';
-import 'ai_screen.dart';
+
 import 'profile_screen.dart';
 import 'budget_screen.dart';
 import 'recurring_screen.dart';
@@ -22,8 +24,8 @@ import 'export_screen.dart';
 import 'split_screen.dart';
 import 'scanner_screen.dart';
 import 'goals_screen.dart';
-import 'currency_screen.dart';
 import 'reminder_screen.dart';
+import 'settings_screen.dart';
 import '../widgets/ai_bot_widget.dart';
 
 class MainScreen extends StatefulWidget {
@@ -54,7 +56,76 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+    _initCurrencyAndLoadData();
+  }
+
+  Future<void> _initCurrencyAndLoadData() async {
+    await CurrencyHelper.init(); // Load saved currency
+
+    // Check if currency is set (we can check if it's default 'INR' and maybe ask?
+    // Or just always ask once if we had a flag.
+    // For now, let's checking SharedPreferences directly to see if it was ever set.
+    // But CurrencyHelper.init() already hides that logic.
+    // Let's modify init to return if it was loaded or default.
+    // Or just check here:
+
+    // Actually, asking the user "after account creation" implies we should ask
+    // if it's their first time. Since I can't easily detect "first time after signup"
+    // without more complex state or passing flags, I will just check if
+    // SharedPreferences has the key 'currency'. If not, show dialog.
+
+    final prefs = await SharedPreferences.getInstance();
+    final hasSetCurrency = prefs.containsKey('currency');
+
+    if (!hasSetCurrency && mounted) {
+      // Short delay to let build finish or just show after
+      Future.delayed(Duration.zero, () => _showCurrencyDialog());
+    }
+
     _loadData();
+  }
+
+  void _showCurrencyDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Force selection
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Provider.of<ThemeProvider>(context).isDarkMode
+            ? const Color(0xFF1E293B)
+            : Colors.white,
+        title: Text(
+          'Select your Currency',
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.bold,
+            color: Provider.of<ThemeProvider>(context).isDarkMode
+                ? Colors.white
+                : Colors.black,
+          ),
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: CurrencyHelper.symbols.length,
+            itemBuilder: (context, index) {
+              final code = CurrencyHelper.symbols.keys.elementAt(index);
+              final symbol = CurrencyHelper.symbols[code]!;
+              return ListTile(
+                leading: Text(symbol, style: const TextStyle(fontSize: 20)),
+                title: Text(code),
+                onTap: () async {
+                  await CurrencyHelper.setCurrency(code);
+                  if (mounted && context.mounted) {
+                    setState(() {}); // Rebuild to update UI
+                    Navigator.of(ctx).pop();
+                  }
+                },
+              );
+            },
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _loadData() async {
@@ -64,9 +135,17 @@ class _MainScreenState extends State<MainScreen> {
     });
     try {
       final userId = widget.user?.uid ?? '';
-      final expenses = await ApiService.getExpenses(userId);
-      final payments = await ApiService.getPayments(userId);
-      final incomes = await ApiService.getIncomes(userId);
+
+      // Parallelize API calls
+      final results = await Future.wait([
+        ApiService.getExpenses(userId),
+        ApiService.getPayments(userId),
+        ApiService.getIncomes(userId),
+      ]);
+
+      final expenses = results[0] as List<Expense>;
+      final payments = results[1] as List<Payment>;
+      final incomes = results[2] as List<Income>;
 
       if (mounted) {
         setState(() {
@@ -81,6 +160,8 @@ class _MainScreenState extends State<MainScreen> {
         setState(() {
           _isLoading = false;
         });
+        debugPrint('Failed to load data: $e');
+        // Optional: Show snackbar, but debugPrint is less intrusive on boot if it's just a minor glitch
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Failed to load data: $e')));
@@ -144,20 +225,39 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  void _navigateToProfile() {
+  Future<void> _updateExpense(Expense expense) async {
+    try {
+      final userId = widget.user?.uid ?? '';
+      await ApiService.updateExpense(expense, userId);
+      await _loadData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to update expense: $e')));
+      }
+    }
+  }
+
+  void _navigateToEditExpense(Expense expense) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => ProfileScreen(
-          user: widget.user,
-          onLogout: widget.onLogout,
+        builder: (ctx) => ExpensesScreen(
+          expenses: _expenses,
+          onAdd: _addExpense,
+          onAddIncome: _addIncome,
+          onDelete: _deleteExpense,
+          onEdit: _updateExpense,
+          expenseToEdit: expense,
+          isDark: Provider.of<ThemeProvider>(context, listen: false).isDarkMode,
           categories: widget.categories,
-          onAddCategory: widget.onAddCategory,
         ),
       ),
     );
   }
 
   void _showAddMenu() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -171,7 +271,7 @@ class _MainScreenState extends State<MainScreen> {
                 context,
                 title: 'Income',
                 icon: LucideIcons.arrowDownCircle,
-                color: const Color(0xFF10B981),
+                color: themeProvider.primaryColor,
                 onTap: () => _navigateToAddWithType('Income'),
               ),
               _buildMenuButton(
@@ -287,20 +387,32 @@ class _MainScreenState extends State<MainScreen> {
         currentBalance: currentBalance,
       ),
 
-      HistoryScreen(expenses: _expenses, payments: _payments, isDark: isDark),
-
-      AIScreen(
+      HistoryScreen(
         expenses: _expenses,
+        payments: _payments,
         isDark: isDark,
+        onEditExpense: _navigateToEditExpense,
+        onDeleteExpense: _deleteExpense,
+      ),
+
+      ProfileScreen(
         user: widget.user,
-        onDataChanged: _loadData,
+        onLogout: widget.onLogout,
+        categories: widget.categories,
+        onAddCategory: widget.onAddCategory,
       ),
     ];
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Expense Tracker',
+          _selectedIndex == 0
+              ? 'Dashboard'
+              : _selectedIndex == 1
+              ? 'Payments'
+              : _selectedIndex == 2
+              ? 'History'
+              : 'Profile',
           style: GoogleFonts.inter(fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -309,32 +421,19 @@ class _MainScreenState extends State<MainScreen> {
             color: isDark ? Colors.white : Colors.black,
             onPressed: themeProvider.toggleTheme,
           ),
-          IconButton(
-            icon: const Icon(LucideIcons.refreshCw),
-            onPressed: _loadData,
-          ),
-          const SizedBox(width: 8),
-          InkWell(
-            onTap: _navigateToProfile,
-            customBorder: const CircleBorder(),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: CircleAvatar(
-                radius: 16,
-                backgroundColor: Colors.white,
-                backgroundImage: widget.user?.pictureUrl != null
-                    ? NetworkImage(widget.user!.pictureUrl.toString())
-                    : null,
-                child: widget.user?.pictureUrl == null
-                    ? const Icon(
-                        LucideIcons.user,
-                        size: 20,
-                        color: Color(0xFF10B981),
-                      )
-                    : null,
-              ),
+          if (_selectedIndex == 3) // Profile Tab
+            IconButton(
+              icon: const Icon(LucideIcons.settings),
+              color: isDark ? Colors.white : Colors.black,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SettingsScreen(user: widget.user),
+                  ),
+                );
+              },
             ),
-          ),
           const SizedBox(width: 16),
         ],
         flexibleSpace: Container(
@@ -379,7 +478,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddMenu,
-        backgroundColor: const Color(0xFF009B6E),
+        backgroundColor: themeProvider.primaryColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         child: const Icon(LucideIcons.plus, color: Colors.white, size: 28),
       ),
@@ -397,7 +496,7 @@ class _MainScreenState extends State<MainScreen> {
                 icon: Icon(
                   LucideIcons.home,
                   color: _selectedIndex == 0
-                      ? const Color(0xFF009B6E)
+                      ? themeProvider.primaryColor
                       : Colors.grey,
                 ),
                 onPressed: () => setState(() => _selectedIndex = 0),
@@ -406,7 +505,7 @@ class _MainScreenState extends State<MainScreen> {
                 icon: Icon(
                   LucideIcons.creditCard,
                   color: _selectedIndex == 1
-                      ? const Color(0xFF009B6E)
+                      ? themeProvider.primaryColor
                       : Colors.grey,
                 ),
                 onPressed: () => setState(() => _selectedIndex = 1),
@@ -416,16 +515,16 @@ class _MainScreenState extends State<MainScreen> {
                 icon: Icon(
                   LucideIcons.history,
                   color: _selectedIndex == 2
-                      ? const Color(0xFF009B6E)
+                      ? themeProvider.primaryColor
                       : Colors.grey,
                 ),
                 onPressed: () => setState(() => _selectedIndex = 2),
               ),
               IconButton(
                 icon: Icon(
-                  LucideIcons.messageSquare,
+                  LucideIcons.user,
                   color: _selectedIndex == 3
-                      ? const Color(0xFF009B6E)
+                      ? themeProvider.primaryColor
                       : Colors.grey,
                 ),
                 onPressed: () => setState(() => _selectedIndex = 3),
@@ -470,7 +569,7 @@ class _MainScreenState extends State<MainScreen> {
                 ? NetworkImage(widget.user!.pictureUrl!)
                 : null,
             child: widget.user?.pictureUrl == null
-                ? const Icon(LucideIcons.user, color: Colors.green)
+                ? Icon(LucideIcons.user, color: themeProvider.primaryColor)
                 : null,
           ),
         ),
@@ -614,29 +713,7 @@ class _MainScreenState extends State<MainScreen> {
             );
           },
         ),
-        const Divider(height: 1),
-        ListTile(
-          leading: Icon(
-            LucideIcons.arrowRightLeft,
-            color: isDark ? Colors.white : Colors.black87,
-          ),
-          title: Text(
-            'Currency Converter',
-            style: GoogleFonts.inter(
-              color: isDark ? Colors.white : Colors.black87,
-            ),
-          ),
-          onTap: () {
-            Navigator.pop(context);
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) =>
-                    CurrencyScreen(user: widget.user, isDark: isDark),
-              ),
-            );
-          },
-        ),
+
         const Divider(height: 1),
         ListTile(
           leading: Icon(

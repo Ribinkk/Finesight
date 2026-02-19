@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider with ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
-  Color _primaryColor = const Color(0xFF10B981); // Emerald default
+  Color _primaryColor = const Color(0xFF00E5FF); // Cyan match login
 
   ThemeMode get themeMode => _themeMode;
   Color get primaryColor => _primaryColor;
@@ -66,7 +66,7 @@ class ThemeProvider with ChangeNotifier {
 
   void resetToDefaults() {
     _themeMode = ThemeMode.system;
-    _primaryColor = const Color(0xFF10B981);
+    _primaryColor = const Color(0xFF00E5FF);
     _saveToPrefs();
     notifyListeners();
   }

@@ -32,7 +32,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CircularProgressIndicator(color: Color(0xFF009B6E)),
+              const CircularProgressIndicator(
+                color: Colors.white,
+              ), // Using white on top of translucent black overlay or similar loader logic
               const SizedBox(height: 16),
               const Text(
                 'Analyzing Receipt...',
@@ -192,7 +194,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF009B6E),
+              backgroundColor: Theme.of(context).primaryColor,
             ),
             onPressed: () async {
               if (titleController.text.isEmpty ||
@@ -218,9 +220,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 if (mounted && context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Expense Added!'),
-                      backgroundColor: Colors.green,
+                    SnackBar(
+                      content: const Text('Expense Added!'),
+                      backgroundColor: Theme.of(context).primaryColor,
                     ),
                   );
                 }
@@ -303,7 +305,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             const SizedBox(height: 48),
             FloatingActionButton.extended(
               onPressed: _scan,
-              backgroundColor: const Color(0xFF009B6E),
+              backgroundColor: Theme.of(context).primaryColor,
               foregroundColor: Colors.white,
               icon: const Icon(LucideIcons.camera),
               label: const Text(

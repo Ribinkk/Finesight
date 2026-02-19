@@ -54,10 +54,12 @@ class LoginScreen extends StatelessWidget {
                                     height: 80,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: Colors.blue.withValues(alpha: 0.2),
-                                      boxShadow: const [
+                                      color: Theme.of(
+                                        context,
+                                      ).primaryColor.withValues(alpha: 0.2),
+                                      boxShadow: [
                                         BoxShadow(
-                                          color: Colors.blueAccent,
+                                          color: Theme.of(context).primaryColor,
                                           blurRadius: 40,
                                           spreadRadius: 10,
                                         ),
@@ -155,19 +157,24 @@ class LoginScreen extends StatelessWidget {
                                                   width: 18,
                                                   height: 25,
                                                   decoration: BoxDecoration(
-                                                    color: const Color(
-                                                      0xFF00E5FF,
-                                                    ), // Cyan glow
+                                                    color: Color.lerp(
+                                                      Theme.of(
+                                                        context,
+                                                      ).primaryColor,
+                                                      Colors.white,
+                                                      0.5,
+                                                    ), // Lighter dynamic glow
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                           50,
                                                         ),
-                                                    boxShadow: const [
+                                                    boxShadow: [
                                                       BoxShadow(
-                                                        color: Color(
-                                                          0xFF00E5FF,
-                                                        ),
-                                                        blurRadius: 8,
+                                                        color: Theme.of(
+                                                          context,
+                                                        ).primaryColor,
+                                                        blurRadius: 10,
+                                                        spreadRadius: 2,
                                                       ),
                                                     ],
                                                   ),
@@ -200,19 +207,24 @@ class LoginScreen extends StatelessWidget {
                                                   width: 18,
                                                   height: 25,
                                                   decoration: BoxDecoration(
-                                                    color: const Color(
-                                                      0xFF00E5FF,
+                                                    color: Color.lerp(
+                                                      Theme.of(
+                                                        context,
+                                                      ).primaryColor,
+                                                      Colors.white,
+                                                      0.5,
                                                     ),
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                           50,
                                                         ),
-                                                    boxShadow: const [
+                                                    boxShadow: [
                                                       BoxShadow(
-                                                        color: Color(
-                                                          0xFF00E5FF,
-                                                        ),
-                                                        blurRadius: 8,
+                                                        color: Theme.of(
+                                                          context,
+                                                        ).primaryColor,
+                                                        blurRadius: 10,
+                                                        spreadRadius: 2,
                                                       ),
                                                     ],
                                                   ),
@@ -318,15 +330,17 @@ class LoginScreen extends StatelessWidget {
                           ElevatedButton(
                             onPressed: onLogin,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.black,
+                              backgroundColor: Theme.of(context).primaryColor,
+                              foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 18),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               minimumSize: const Size(double.infinity, 56),
                               elevation: 4,
-                              shadowColor: Colors.white.withValues(alpha: 0.1),
+                              shadowColor: Theme.of(
+                                context,
+                              ).primaryColor.withValues(alpha: 0.3),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -334,7 +348,7 @@ class LoginScreen extends StatelessWidget {
                                 Icon(
                                   Icons.g_mobiledata,
                                   size: 28,
-                                  color: Colors.grey[800],
+                                  color: Colors.white,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(

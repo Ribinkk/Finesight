@@ -58,6 +58,17 @@ class MyApp extends StatelessWidget {
           color: Colors.white,
           margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
         ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: themeProvider.primaryColor,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          ),
+        ),
         textTheme: GoogleFonts.interTextTheme(),
       ),
       darkTheme: ThemeData(
@@ -65,18 +76,35 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: themeProvider.primaryColor,
           primary: themeProvider.primaryColor,
-          surface: const Color(0xFF0F172A),
+          surface: const Color(0xFF1E293B), // Lighter surface (Slate 800)
           brightness: Brightness.dark,
         ),
-        scaffoldBackgroundColor: const Color(0xFF020617),
+        scaffoldBackgroundColor: const Color(
+          0xFF020617,
+        ), // Keep background deep
         cardTheme: CardThemeData(
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(color: Color(0xFF1E293B), width: 1),
+            side: const BorderSide(
+              color: Color(0xFF334155),
+              width: 1,
+            ), // Slate 700 border
           ),
-          color: const Color(0xFF0F172A),
+          color: const Color(0xFF1E293B), // Slate 800
           margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: themeProvider.primaryColor,
+            foregroundColor:
+                Colors.black, // Dark text on bright primary often reads better
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          ),
         ),
         textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
       ),

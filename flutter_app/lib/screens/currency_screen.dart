@@ -51,7 +51,7 @@ class _CurrencyScreenState extends State<CurrencyScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
               side: isSelected
-                  ? const BorderSide(color: Color(0xFF009B6E), width: 2)
+                  ? BorderSide(color: Theme.of(context).primaryColor, width: 2)
                   : BorderSide.none,
             ),
             child: ListTile(
@@ -61,14 +61,14 @@ class _CurrencyScreenState extends State<CurrencyScreen> {
                 height: 40,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF009B6E).withValues(alpha: 0.1),
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Text(
                   CurrencyHelper.symbols[code]!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF009B6E),
+                    color: Theme.of(context).primaryColor,
                   ),
                 ),
               ),
@@ -80,9 +80,9 @@ class _CurrencyScreenState extends State<CurrencyScreen> {
                 ),
               ),
               trailing: isSelected
-                  ? const Icon(
+                  ? Icon(
                       LucideIcons.checkCircle,
-                      color: Color(0xFF009B6E),
+                      color: Theme.of(context).primaryColor,
                     )
                   : null,
             ),
