@@ -128,6 +128,22 @@ router.post('/expenses', [
     }
 });
 
+// Update Expense
+router.put('/expenses/:id', async (req, res) => {
+    try {
+        const { user_id } = req.query;
+        const updated = await Expense.findOneAndUpdate(
+            { id: req.params.id, user_id },
+            req.body,
+            { new: true }
+        );
+        if (!updated) return res.status(404).json({ error: 'Expense not found' });
+        res.json({ data: updated });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update expense' });
+    }
+});
+
 router.delete('/expenses/:id', async (req, res) => {
     try {
         const { user_id } = req.query;
@@ -228,11 +244,14 @@ router.get('/budgets', async (req, res) => {
 
 router.post('/budgets', async (req, res) => {
     try {
-        const { user_id, category, amount, month, year } = req.body;
+        const { id, user_id, category, limit, month, year } = req.body;
         // Upsert budget
         const budget = await Budget.findOneAndUpdate(
             { user_id, category, month, year },
-            { amount },
+            { 
+                limit,
+                $setOnInsert: { id: id || Date.now().toString() }
+            },
             { new: true, upsert: true }
         );
         res.json({ data: budget });
@@ -264,7 +283,11 @@ router.get('/splits', async (req, res) => {
 
 router.post('/splits', async (req, res) => {
     try {
-        const split = await SplitExpense.create(req.body);
+        const splitData = {
+            ...req.body,
+            id: req.body.id || Date.now().toString()
+        };
+        const split = await SplitExpense.create(splitData);
         res.json({ data: split });
     } catch (err) {
         res.status(500).json({ error: 'Failed to add split expense' });
@@ -428,7 +451,7 @@ router.post('/chat', async (req, res) => {
 
   try {
     const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash",
+        model: "gemini-1.5-pro",
         systemInstruction: `You are a helpful financial assistant for of Expense Tracker App. 
         You help users verify expenses, income, etc., by calling functions.
         
@@ -447,11 +470,23 @@ router.post('/chat', async (req, res) => {
     });
 
     const chat = model.startChat({
-        history: context ? context.map(c => ({
-            role: c.role === 'system' ? 'user' : c.role, // Gemini uses 'user'/'model', mapping 'system' to 'user' for context context if necessary, but systemInstruction handles main persona
-            parts: [{ text: c.content }]
-        })) : []
+        history: context ? context.map(c => {
+            // Gemini history roles must alternate between 'user' and 'model'
+            // 'system' is not a valid role in history when using startChat with systemInstruction
+            let role = c.role;
+            if (role === 'system') role = 'user';
+            if (role === 'assistant') role = 'model';
+            
+            return {
+                role: role,
+                parts: [{ text: c.content }]
+            };
+        }).filter(c => c.role === 'user' || c.role === 'model') : []
     });
+
+    // Ensure history alternates and starts/ends correctly if needed
+    // (Simplified for now, but role mapping is the main fix)
+
 
     const result = await chat.sendMessage(message);
     const responseText = result.response.text();
@@ -561,8 +596,11 @@ router.post('/chat', async (req, res) => {
     }
 
   } catch (err) {
-    console.error("Chat Error:", err);
-    res.status(500).json({ error: "Failed to get response from AI" });
+    console.error("Chat Error Detailed:", err);
+    if (err.status) {
+        console.error("Status Code:", err.status);
+    }
+    res.status(500).json({ error: "Failed to get response from AI", details: err.message });
   }
 });
 
@@ -572,7 +610,7 @@ router.post('/scan-receipt', async (req, res) => {
   if (!imageBase64) return res.status(400).json({ error: "Image data required" });
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
     const prompt = `Inspect this receipt image. Extract:
     - Merchant Name (title)
