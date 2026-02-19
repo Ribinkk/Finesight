@@ -131,21 +131,28 @@ class _WalletViewState extends State<WalletView> {
     super.dispose();
   }
 
-  void _showAddCardDialog() {
+  void _showAddCardDialog({int? editIndex, Map<String, dynamic>? card}) {
+    final numberController = TextEditingController(text: card?['last4'] ?? '');
+    final holderController = TextEditingController(text: card?['holder'] ?? '');
+    final typeController = TextEditingController(
+      text: card?['type'] ?? 'MasterCard',
+    );
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
         title: Text(
-          'Add New Card',
+          editIndex != null ? 'Edit Card' : 'Add New Card',
           style: TextStyle(color: widget.isDark ? Colors.white : Colors.black),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
+              controller: numberController,
               decoration: InputDecoration(
-                hintText: 'Card Number',
+                hintText: 'Card Number (Last 4)',
                 filled: true,
                 fillColor: widget.isDark
                     ? Colors.black12
@@ -156,38 +163,18 @@ class _WalletViewState extends State<WalletView> {
               ),
             ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'MM/YY',
-                      filled: true,
-                      fillColor: widget.isDark
-                          ? Colors.black12
-                          : Colors.grey.shade100,
-                    ),
-                    style: TextStyle(
-                      color: widget.isDark ? Colors.white : Colors.black,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'CVC',
-                      filled: true,
-                      fillColor: widget.isDark
-                          ? Colors.black12
-                          : Colors.grey.shade100,
-                    ),
-                    style: TextStyle(
-                      color: widget.isDark ? Colors.white : Colors.black,
-                    ),
-                  ),
-                ),
-              ],
+            TextField(
+              controller: holderController,
+              decoration: InputDecoration(
+                hintText: 'Card Holder Name',
+                filled: true,
+                fillColor: widget.isDark
+                    ? Colors.black12
+                    : Colors.grey.shade100,
+              ),
+              style: TextStyle(
+                color: widget.isDark ? Colors.white : Colors.black,
+              ),
             ),
           ],
         ),
@@ -198,37 +185,49 @@ class _WalletViewState extends State<WalletView> {
           ),
           ElevatedButton(
             onPressed: () {
-              setState(
-                () => _savedCards.add({
-                  'type': 'MasterCard',
-                  'last4': '8888',
-                  'holder': 'User',
-                }),
-              );
+              final newCard = {
+                'type': typeController.text.isNotEmpty
+                    ? typeController.text
+                    : 'MasterCard',
+                'last4': numberController.text,
+                'holder': holderController.text,
+              };
+
+              setState(() {
+                if (editIndex != null) {
+                  _savedCards[editIndex] = newCard;
+                } else {
+                  _savedCards.add(newCard);
+                }
+              });
               Navigator.pop(ctx);
             },
-            child: const Text('Save Card'),
+            child: Text(editIndex != null ? 'Update Card' : 'Save Card'),
           ),
         ],
       ),
     );
   }
 
-  void _showAddBankDialog() {
+  void _showAddBankDialog({int? editIndex, Map<String, dynamic>? bank}) {
+    final accountController = TextEditingController(text: bank?['last4'] ?? '');
+    final bankNameController = TextEditingController(text: bank?['bank'] ?? '');
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
         title: Text(
-          'Add Bank Account',
+          editIndex != null ? 'Edit Bank Account' : 'Add Bank Account',
           style: TextStyle(color: widget.isDark ? Colors.white : Colors.black),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
+              controller: bankNameController,
               decoration: InputDecoration(
-                hintText: 'Account Number',
+                hintText: 'Bank Name',
                 filled: true,
                 fillColor: widget.isDark
                     ? Colors.black12
@@ -240,8 +239,9 @@ class _WalletViewState extends State<WalletView> {
             ),
             const SizedBox(height: 8),
             TextField(
+              controller: accountController,
               decoration: InputDecoration(
-                hintText: 'IFSC Code',
+                hintText: 'Account Number (Last 4)',
                 filled: true,
                 fillColor: widget.isDark
                     ? Colors.black12
@@ -260,16 +260,24 @@ class _WalletViewState extends State<WalletView> {
           ),
           ElevatedButton(
             onPressed: () {
-              setState(
-                () => _savedBanks.add({
-                  'bank': 'SBI',
-                  'last4': '9999',
-                  'holder': 'User',
-                }),
-              );
+              final newBank = {
+                'bank': bankNameController.text.isNotEmpty
+                    ? bankNameController.text
+                    : 'Bank',
+                'last4': accountController.text,
+                'holder': 'User',
+              };
+
+              setState(() {
+                if (editIndex != null) {
+                  _savedBanks[editIndex] = newBank;
+                } else {
+                  _savedBanks.add(newBank);
+                }
+              });
               Navigator.pop(ctx);
             },
-            child: const Text('Save Account'),
+            child: Text(editIndex != null ? 'Update Account' : 'Save Account'),
           ),
         ],
       ),
@@ -385,7 +393,7 @@ class _WalletViewState extends State<WalletView> {
                         'Available Balance: ₹${widget.currentBalance.toStringAsFixed(2)}',
                     helperStyle: TextStyle(
                       color: widget.currentBalance > 0
-                          ? Colors.green
+                          ? Theme.of(context).primaryColor
                           : Colors.red,
                     ),
                   ),
@@ -427,7 +435,7 @@ class _WalletViewState extends State<WalletView> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                        backgroundColor: Theme.of(context).primaryColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -479,7 +487,7 @@ class _WalletViewState extends State<WalletView> {
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: Theme.of(context).primaryColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 32,
@@ -542,7 +550,7 @@ class _WalletViewState extends State<WalletView> {
       backgroundColor: Colors.transparent,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _scanQR,
-        backgroundColor: Colors.green,
+        backgroundColor: Theme.of(context).primaryColor,
         icon: const Icon(LucideIcons.qrCode, color: Colors.white),
         label: const Text(
           'Scan QR & Pay',
@@ -561,26 +569,73 @@ class _WalletViewState extends State<WalletView> {
             ),
           ),
           const SizedBox(height: 12),
-          ..._savedCards.map(
-            (card) => Card(
+          ..._savedCards.asMap().entries.map((entry) {
+            final index = entry.key;
+            final card = entry.value;
+            return Card(
               elevation: 1,
               color: widget.isDark
-                  ? Colors.blueGrey.shade900
-                  : Colors.blue.shade50,
+                  ? Theme.of(context).primaryColor.withValues(alpha: 0.2)
+                  : Theme.of(context).primaryColor.withValues(alpha: 0.1),
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
                 leading: Icon(
-                  LucideIcons.creditCard,
-                  color: widget.isDark ? Colors.blue.shade200 : Colors.blue,
+                  LucideIcons.landmark,
+                  color: Theme.of(context).primaryColor,
                 ),
                 title: Text('${card['type']} ending in ${card['last4']}'),
                 subtitle: Text(card['holder']),
-                trailing: const Icon(LucideIcons.moreVertical, size: 16),
+                trailing: PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      _showAddCardDialog(editIndex: index, card: card);
+                    } else if (value == 'delete') {
+                      setState(() {
+                        _savedCards.removeAt(index);
+                      });
+                    }
+                  },
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
+                        const PopupMenuItem<String>(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(
+                                LucideIcons.edit3,
+                                size: 18,
+                                color: Colors.blue,
+                              ),
+                              SizedBox(width: 8),
+                              Text('Edit'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(
+                                LucideIcons.trash2,
+                                size: 18,
+                                color: Colors.red,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Delete',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                  icon: const Icon(LucideIcons.moreVertical, size: 16),
+                ),
               ),
-            ),
-          ),
+            );
+          }),
           ElevatedButton.icon(
-            onPressed: _showAddCardDialog,
+            onPressed: () => _showAddCardDialog(),
             icon: const Icon(LucideIcons.plus, size: 16),
             label: const Text('Add Debit / Credit Card'),
             style: ElevatedButton.styleFrom(
@@ -591,8 +646,10 @@ class _WalletViewState extends State<WalletView> {
             ),
           ),
           const SizedBox(height: 16),
-          ..._savedBanks.map(
-            (bank) => Card(
+          ..._savedBanks.asMap().entries.map((entry) {
+            final index = entry.key;
+            final bank = entry.value;
+            return Card(
               elevation: 1,
               color: widget.isDark
                   ? Colors.green.shade900
@@ -605,19 +662,64 @@ class _WalletViewState extends State<WalletView> {
                 ),
                 title: Text(bank['bank']),
                 subtitle: Text('Acct: ****${bank['last4']}'),
-                trailing: const Icon(LucideIcons.moreVertical, size: 16),
+                trailing: PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      _showAddBankDialog(editIndex: index, bank: bank);
+                    } else if (value == 'delete') {
+                      setState(() {
+                        _savedBanks.removeAt(index);
+                      });
+                    }
+                  },
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
+                        const PopupMenuItem<String>(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(
+                                LucideIcons.edit3,
+                                size: 18,
+                                color: Colors.blue,
+                              ),
+                              SizedBox(width: 8),
+                              Text('Edit'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(
+                                LucideIcons.trash2,
+                                size: 18,
+                                color: Colors.red,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Delete',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                  icon: const Icon(LucideIcons.moreVertical, size: 16),
+                ),
               ),
-            ),
-          ),
+            );
+          }),
           ElevatedButton.icon(
-            onPressed: _showAddBankDialog,
+            onPressed: () => _showAddBankDialog(),
             icon: const Icon(LucideIcons.plus, size: 16),
             label: const Text('Add Bank Account'),
             style: ElevatedButton.styleFrom(
               backgroundColor: widget.isDark ? Colors.grey[800] : Colors.white,
-              foregroundColor: Colors.green,
+              foregroundColor: Theme.of(context).primaryColor,
               elevation: 0,
-              side: const BorderSide(color: Colors.green),
+              side: BorderSide(color: Theme.of(context).primaryColor),
             ),
           ),
           const SizedBox(height: 24),
@@ -649,7 +751,9 @@ class _WalletViewState extends State<WalletView> {
                   backgroundColor: item['status'] == 'success'
                       ? (item['isExpense'] == true
                             ? Colors.orange.withValues(alpha: 0.1)
-                            : Colors.green.withValues(alpha: 0.1))
+                            : Theme.of(
+                                context,
+                              ).primaryColor.withValues(alpha: 0.1))
                       : Colors.red.withValues(alpha: 0.1),
                   child: Icon(
                     item['status'] == 'success'
@@ -660,7 +764,7 @@ class _WalletViewState extends State<WalletView> {
                     color: item['status'] == 'success'
                         ? (item['isExpense'] == true
                               ? Colors.orange
-                              : Colors.green)
+                              : Theme.of(context).primaryColor)
                         : Colors.red,
                   ),
                 ),
