@@ -230,7 +230,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                       gradient: LinearGradient(
                         colors: [
                           Theme.of(context).primaryColor,
-                          Theme.of(context).primaryColor.withOpacity(0.7),
+                          Theme.of(context).primaryColor.withValues(alpha: 0.7),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -240,7 +240,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                         BoxShadow(
                           color: Theme.of(
                             context,
-                          ).primaryColor.withOpacity(0.3),
+                          ).primaryColor.withValues(alpha: 0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 8),
                         ),
@@ -251,7 +251,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                         Text(
                           'Total Budget (${_getMonthName(_currentMonth)})',
                           style: GoogleFonts.inter(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
@@ -270,7 +270,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                           height: 12,
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: FractionallySizedBox(
@@ -287,14 +287,14 @@ class _BudgetScreenState extends State<BudgetScreen> {
                                         : Colors.white,
                                     totalSpent > totalBudget
                                         ? const Color(0xFFFF1744)
-                                        : Colors.white.withOpacity(0.8),
+                                        : Colors.white.withValues(alpha: 0.8),
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(10),
                                 boxShadow: [
                                   if (totalSpent > 0)
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.1,
+                                      color: Colors.black.withValues(alpha: 0.1,
                                       ),
                                       blurRadius: 4,
                                       offset: const Offset(0, 2),
@@ -311,7 +311,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                             Text(
                               'Spent: ₹${totalSpent.toStringAsFixed(0)}',
                               style: GoogleFonts.inter(
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                                 fontSize: 13,
                               ),
                             ),
@@ -385,7 +385,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: isOverBudget
-                              ? const Color(0xFFE74C3C).withOpacity(0.5)
+                              ? const Color(0xFFE74C3C).withValues(alpha: 0.5)
                               : widget.isDark
                               ? Colors.white10
                               : Colors.grey.shade200,
@@ -448,7 +448,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                                           : progress > 0.8
                                           ? const Color(0xFFFF6B6B)
                                           : Theme.of(context).primaryColor
-                                                .withOpacity(0.7),
+                                                .withValues(alpha: 0.7),
                                     ],
                                   ),
                                   borderRadius: BorderRadius.circular(10),

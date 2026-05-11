@@ -14,7 +14,36 @@ flutter_app/.packages
 
 # Build outputs
 backend/dist/
-flutter_app/build/
+flutter_app/build/windows
+flutter_app/build/linux
+flutter_app/build/macos
+flutter_app/build/ios
+flutter_app/build/android
+flutter_app/build/unit_test_assets
+flutter_app/build/.cxx
+flutter_app/build/app
+flutter_app/build/firebase_auth
+flutter_app/build/firebase_core
+flutter_app/build/flutter_assets
+flutter_app/build/flutter_native_splash
+flutter_app/build/flutter_plugin_android_lifecycle
+flutter_app/build/flutter_secure_storage
+flutter_app/build/fluttertoast
+flutter_app/build/google_mlkit_commons
+flutter_app/build/google_mlkit_text_recognition
+flutter_app/build/google_sign_in_android
+flutter_app/build/image_picker_android
+flutter_app/build/mobile_scanner
+flutter_app/build/native_assets
+flutter_app/build/native_hooks
+flutter_app/build/path_provider_android
+flutter_app/build/permission_handler_android
+flutter_app/build/printing
+flutter_app/build/razorpay_flutter
+flutter_app/build/reports
+flutter_app/build/shared_preferences_android
+flutter_app/build/url_launcher_android
+flutter_app/build/*.cache.dill.track.dill
 flutter_app/.dart_tool/
 *.log
 

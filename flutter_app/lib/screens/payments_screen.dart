@@ -365,7 +365,7 @@ class _WalletViewState extends State<WalletView> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.3),
+                      color: Colors.grey.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -375,7 +375,7 @@ class _WalletViewState extends State<WalletView> {
                   children: [
                     CircleAvatar(
                       radius: 25,
-                      backgroundColor: Colors.blue.withOpacity(0.1),
+                      backgroundColor: Colors.blue.withValues(alpha: 0.1),
                       child: const Icon(LucideIcons.user, color: Colors.blue),
                     ),
                     const SizedBox(width: 16),
@@ -624,8 +624,8 @@ class _WalletViewState extends State<WalletView> {
             return Card(
               elevation: 1,
               color: widget.isDark
-                  ? Theme.of(context).primaryColor.withOpacity(0.2)
-                  : Theme.of(context).primaryColor.withOpacity(0.1),
+                  ? Theme.of(context).primaryColor.withValues(alpha: 0.2)
+                  : Theme.of(context).primaryColor.withValues(alpha: 0.1),
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
                 leading: Icon(
@@ -799,11 +799,11 @@ class _WalletViewState extends State<WalletView> {
                 leading: CircleAvatar(
                   backgroundColor: item['status'] == 'success'
                       ? (item['isExpense'] == true
-                            ? Colors.orange.withOpacity(0.1)
+                            ? Colors.orange.withValues(alpha: 0.1)
                             : Theme.of(
                                 context,
-                              ).primaryColor.withOpacity(0.1))
-                      : Colors.red.withOpacity(0.1),
+                              ).primaryColor.withValues(alpha: 0.1))
+                      : Colors.red.withValues(alpha: 0.1),
                   child: Icon(
                     item['status'] == 'success'
                         ? (item['isExpense'] == true

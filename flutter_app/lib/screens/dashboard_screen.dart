@@ -7,7 +7,7 @@ import '../models/expense.dart';
 import '../models/payment.dart';
 import '../models/income.dart';
 import '../models/user_model.dart'; // Needed for passing widget.user to AnalyticsScreen? Use widget.widget.user if available but DashboardScreen is stateless without user.
-import 'analytics_screen.dart';
+
 import 'spending_analysis_screen.dart';
 import '../services/api_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -235,7 +235,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Theme.of(context).colorScheme.primary,
                         Theme.of(
                           context,
-                        ).colorScheme.primary.withOpacity(0.8),
+                        ).colorScheme.primary.withValues(alpha: 0.8),
                       ],
                     ),
                   ),
@@ -272,7 +272,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(height: 16),
                       Container(
                         height: 1,
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                       ),
                       const SizedBox(height: 16),
                       Row(
@@ -415,7 +415,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 Theme.of(context).primaryColor,
                                 Theme.of(
                                   context,
-                                ).primaryColor.withOpacity(0.7),
+                                ).primaryColor.withValues(alpha: 0.7),
                               ],
                             ), // emerald equivalent
                             borderRadius: BorderRadius.circular(8),
@@ -667,7 +667,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 'groceries':
         return [
           Theme.of(context).primaryColor,
-          Theme.of(context).primaryColor.withOpacity(0.7),
+          Theme.of(context).primaryColor.withValues(alpha: 0.7),
         ]; // Cyan/Greenish match primary
       case 'rent':
         return [const Color(0xFF78350F), const Color(0xFF92400E)]; // Brown
@@ -683,7 +683,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // Use a deterministic color pair based on hash
         final index = category.hashCode % Colors.primaries.length;
         final color = Colors.primaries[index];
-        return [color, color.withOpacity(0.7)];
+        return [color, color.withValues(alpha: 0.7)];
     }
   }
 }

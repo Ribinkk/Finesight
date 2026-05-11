@@ -142,7 +142,7 @@ class _SpendingAnalysisScreenState extends State<SpendingAnalysisScreen> {
       children: [
         Expanded(child: _summaryCard('Daily Avg', CurrencyHelper.format(_dailyAvg), LucideIcons.calendar, const [Color(0xFF6366F1), Color(0xFF818CF8)])),
         const SizedBox(width: 10),
-        Expanded(child: _summaryCard('Savings', '${savingsRate.toStringAsFixed(0)}%', LucideIcons.piggyBank, [primary, primary.withOpacity(0.7)])),
+        Expanded(child: _summaryCard('Savings', '${savingsRate.toStringAsFixed(0)}%', LucideIcons.piggyBank, [primary, primary.withValues(alpha: 0.7)])),
         const SizedBox(width: 10),
         Expanded(child: _summaryCard('Txns', '${widget.expenses.length}', LucideIcons.receipt, const [Color(0xFFF97316), Color(0xFFFB923C)])),
       ],
@@ -155,7 +155,7 @@ class _SpendingAnalysisScreenState extends State<SpendingAnalysisScreen> {
       decoration: BoxDecoration(
         color: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
       ),
       child: Column(
         children: [
@@ -184,7 +184,7 @@ class _SpendingAnalysisScreenState extends State<SpendingAnalysisScreen> {
       decoration: BoxDecoration(
         color: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 12)],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,7 +214,7 @@ class _SpendingAnalysisScreenState extends State<SpendingAnalysisScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: isUp ? Colors.red.withOpacity(0.1) : Colors.green.withOpacity(0.1),
+                  color: isUp ? Colors.red.withValues(alpha: 0.1) : Colors.green.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -249,7 +249,7 @@ class _SpendingAnalysisScreenState extends State<SpendingAnalysisScreen> {
       decoration: BoxDecoration(
         color: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 12)],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,7 +332,7 @@ class _SpendingAnalysisScreenState extends State<SpendingAnalysisScreen> {
                     drawVerticalLine: false,
                     horizontalInterval: chartMaxY / 4,
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: widget.isDark ? Colors.white.withOpacity(0.05) : Colors.grey.shade100,
+                      color: widget.isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade100,
                       strokeWidth: 1,
                     ),
                   ),
@@ -355,7 +355,7 @@ class _SpendingAnalysisScreenState extends State<SpendingAnalysisScreen> {
                               ? LinearGradient(
                                   colors: isToday
                                       ? [const Color(0xFF6366F1), const Color(0xFF818CF8)]
-                                      : [primary, primary.withOpacity(0.7)],
+                                      : [primary, primary.withValues(alpha: 0.7)],
                                   begin: Alignment.bottomCenter,
                                   end: Alignment.topCenter,
                                 )
@@ -365,7 +365,7 @@ class _SpendingAnalysisScreenState extends State<SpendingAnalysisScreen> {
                             show: true,
                             toY: chartMaxY,
                             color: widget.isDark
-                                ? Colors.white.withOpacity(0.03)
+                                ? Colors.white.withValues(alpha: 0.03)
                                 : Colors.grey.shade100,
                           ),
                         ),
@@ -390,7 +390,7 @@ class _SpendingAnalysisScreenState extends State<SpendingAnalysisScreen> {
       decoration: BoxDecoration(
         color: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 12)],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -414,10 +414,10 @@ class _SpendingAnalysisScreenState extends State<SpendingAnalysisScreen> {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? colors[0].withOpacity(0.1)
+                      ? colors[0].withValues(alpha: 0.1)
                       : (widget.isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC)),
                   borderRadius: BorderRadius.circular(14),
-                  border: isSelected ? Border.all(color: colors[0].withOpacity(0.4), width: 1.5) : null,
+                  border: isSelected ? Border.all(color: colors[0].withValues(alpha: 0.4), width: 1.5) : null,
                 ),
                 child: Column(
                   children: [
@@ -426,7 +426,7 @@ class _SpendingAnalysisScreenState extends State<SpendingAnalysisScreen> {
                         Container(
                           width: 36, height: 36,
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(colors: [colors[0].withOpacity(0.2), colors[1].withOpacity(0.1)]),
+                            gradient: LinearGradient(colors: [colors[0].withValues(alpha: 0.2), colors[1].withValues(alpha: 0.1)]),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(_getCategoryIcon(entry.key), color: colors[0], size: 18),
@@ -481,7 +481,7 @@ class _SpendingAnalysisScreenState extends State<SpendingAnalysisScreen> {
       decoration: BoxDecoration(
         color: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 12)],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -546,8 +546,8 @@ class _SpendingAnalysisScreenState extends State<SpendingAnalysisScreen> {
       decoration: BoxDecoration(
         color: widget.isDark ? const Color(0xFF1E293B) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors[0].withOpacity(0.3)),
-        boxShadow: [BoxShadow(color: colors[0].withOpacity(0.05), blurRadius: 15)],
+        border: Border.all(color: colors[0].withValues(alpha: 0.3)),
+        boxShadow: [BoxShadow(color: colors[0].withValues(alpha: 0.05), blurRadius: 15)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

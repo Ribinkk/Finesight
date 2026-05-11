@@ -305,9 +305,9 @@ class _MainScreenState extends State<MainScreen> {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
-              border: Border.all(color: color.withOpacity(0.5), width: 2),
+              border: Border.all(color: color.withValues(alpha: 0.5), width: 2),
             ),
             child: Icon(icon, color: color, size: 28),
           ),
@@ -432,8 +432,8 @@ class _MainScreenState extends State<MainScreen> {
             gradient: isDark
                 ? LinearGradient(
                     colors: [
-                      themeProvider.primaryColor.withOpacity(0.8),
-                      themeProvider.primaryColor.withOpacity(0.6),
+                      themeProvider.primaryColor.withValues(alpha: 0.8),
+                      themeProvider.primaryColor.withValues(alpha: 0.6),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -441,7 +441,7 @@ class _MainScreenState extends State<MainScreen> {
                 : LinearGradient(
                     colors: [
                       themeProvider.primaryColor,
-                      themeProvider.primaryColor.withOpacity(0.8),
+                      themeProvider.primaryColor.withValues(alpha: 0.8),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -539,7 +539,7 @@ class _MainScreenState extends State<MainScreen> {
             gradient: LinearGradient(
               colors: [
                 themeProvider.primaryColor,
-                themeProvider.primaryColor.withOpacity(0.8),
+                themeProvider.primaryColor.withValues(alpha: 0.8),
               ],
             ),
           ),

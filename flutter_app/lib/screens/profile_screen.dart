@@ -111,7 +111,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 backgroundColor: isDark
                                     ? Theme.of(
                                         context,
-                                      ).primaryColor.withOpacity(0.5)
+                                      ).primaryColor.withValues(alpha: 0.5)
                                     : Theme.of(
                                         context,
                                       ).primaryColor.withAlpha(50),
@@ -328,7 +328,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text(
@@ -392,7 +392,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: primaryColor.withOpacity(0.1),
+            color: primaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: primaryColor),

@@ -396,8 +396,8 @@ class _SplitScreenState extends State<SplitScreen> {
                           color: youPaid
                               ? Theme.of(
                                   context,
-                                ).primaryColor.withOpacity(0.1)
-                              : Colors.orange.withOpacity(0.1),
+                                ).primaryColor.withValues(alpha: 0.1)
+                              : Colors.orange.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(

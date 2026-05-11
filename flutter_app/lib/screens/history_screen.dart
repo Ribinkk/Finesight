@@ -301,22 +301,22 @@ class HistoryScreen extends StatelessWidget {
           decoration: BoxDecoration(
             color: isDark
                 ? (isExpense
-                      ? Colors.red.shade900.withOpacity(0.2)
-                      : Theme.of(context).primaryColor.withOpacity(0.2))
+                      ? Colors.red.shade900.withValues(alpha: 0.2)
+                      : Theme.of(context).primaryColor.withValues(alpha: 0.2))
                 : (isExpense
                       ? Colors.red.shade50
-                      : Theme.of(context).primaryColor.withOpacity(0.1)),
+                      : Theme.of(context).primaryColor.withValues(alpha: 0.1)),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isDark
                   ? (isExpense
-                        ? Colors.red.shade800.withOpacity(0.3)
-                        : Theme.of(context).primaryColor.withOpacity(0.3))
+                        ? Colors.red.shade800.withValues(alpha: 0.3)
+                        : Theme.of(context).primaryColor.withValues(alpha: 0.3))
                   : (isExpense
                         ? Colors.red.shade100
                         : Theme.of(
                             context,
-                          ).primaryColor.withOpacity(0.2)),
+                          ).primaryColor.withValues(alpha: 0.2)),
               width: 1.5,
             ),
           ),
@@ -329,7 +329,7 @@ class HistoryScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.2),
+                      color: color.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(icon, color: color, size: 24),
@@ -359,10 +359,10 @@ class HistoryScreen extends StatelessWidget {
                               ),
                               decoration: BoxDecoration(
                                 color: isExpense
-                                    ? Colors.red.withOpacity(0.2)
+                                    ? Colors.red.withValues(alpha: 0.2)
                                     : Theme.of(
                                         context,
-                                      ).primaryColor.withOpacity(0.2),
+                                      ).primaryColor.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
@@ -438,8 +438,8 @@ class HistoryScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? Colors.white.withOpacity(0.05)
-                        : Colors.black.withOpacity(0.03),
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.03),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(

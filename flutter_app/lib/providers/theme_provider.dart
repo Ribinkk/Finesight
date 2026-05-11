@@ -41,7 +41,7 @@ class ThemeProvider with ChangeNotifier {
   Future<void> _saveToPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('themeMode', _themeMode.toString());
-    await prefs.setInt('primaryColor', _primaryColor.value);
+    await prefs.setInt('primaryColor', _primaryColor.toARGB32());
   }
 
   void setThemeMode(ThemeMode mode) {

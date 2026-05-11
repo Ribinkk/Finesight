@@ -18,6 +18,18 @@ subprojects {
 subprojects {
     project.evaluationDependsOn(":app")
 }
+subprojects {
+    afterEvaluate {
+        if (project.hasProperty("android")) {
+            val androidExt = project.extensions.findByName("android")
+            if (androidExt is com.android.build.gradle.LibraryExtension) {
+                if (androidExt.namespace.isNullOrEmpty()) {
+                    androidExt.namespace = project.group.toString().ifEmpty { "com.razorpay.${project.name}" }
+                }
+            }
+        }
+    }
+}
 
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)

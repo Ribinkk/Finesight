@@ -95,14 +95,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                   gradient: LinearGradient(
                     colors: [
                       Theme.of(context).primaryColor,
-                      Theme.of(context).primaryColor.withOpacity(0.8),
+                      Theme.of(context).primaryColor.withValues(alpha: 0.8),
                     ],
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: Theme.of(
                         context,
-                      ).primaryColor.withOpacity(0.3),
+                      ).primaryColor.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -148,7 +148,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: widget.isDark
-                    ? Colors.white.withOpacity(0.05)
+                    ? Colors.white.withValues(alpha: 0.05)
                     : Colors.grey.shade200,
               ),
             ),
@@ -172,7 +172,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
@@ -200,7 +200,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: widget.isDark
-                      ? Colors.white.withOpacity(0.05)
+                      ? Colors.white.withValues(alpha: 0.05)
                       : Colors.grey.shade100,
                 ),
               ),
@@ -212,8 +212,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          gradient[0].withOpacity(0.2),
-                          gradient[1].withOpacity(0.1),
+                          gradient[0].withValues(alpha: 0.2),
+                          gradient[1].withValues(alpha: 0.1),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(10),
@@ -286,7 +286,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
@@ -316,7 +316,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                   horizontalInterval: maxVal / 5 == 0 ? 1 : maxVal / 5,
                   getDrawingHorizontalLine: (value) => FlLine(
                     color: widget.isDark
-                        ? Colors.white.withOpacity(0.05)
+                        ? Colors.white.withValues(alpha: 0.05)
                         : Colors.grey.shade100,
                     strokeWidth: 1,
                   ),
@@ -404,7 +404,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                     gradient: LinearGradient(
                       colors: [
                         Theme.of(context).primaryColor,
-                        Theme.of(context).primaryColor.withOpacity(0.8),
+                        Theme.of(context).primaryColor.withValues(alpha: 0.8),
                       ],
                     ),
                     barWidth: 4,
@@ -424,8 +424,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                       show: true,
                       gradient: LinearGradient(
                         colors: [
-                          Theme.of(context).primaryColor.withOpacity(0.3),
-                          Theme.of(context).primaryColor.withOpacity(0.0),
+                          Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                          Theme.of(context).primaryColor.withValues(alpha: 0.0),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,

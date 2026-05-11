@@ -181,7 +181,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                     targetAmount: amount,
                     currentAmount: 0,
                     deadline: selectedDate,
-                    color: selectedColor.value,
+                    color: selectedColor.toARGB32(),
                   );
 
                   try {
@@ -445,7 +445,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                                               Color(goal.color),
                                               Color(
                                                 goal.color,
-                                              ).withOpacity(0.7),
+                                              ).withValues(alpha: 0.7),
                                             ],
                                           ),
                                           borderRadius: BorderRadius.circular(
@@ -456,7 +456,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                                               BoxShadow(
                                                 color: Color(
                                                   goal.color,
-                                                ).withOpacity(0.3),
+                                                ).withValues(alpha: 0.3),
                                                 blurRadius: 4,
                                                 offset: const Offset(0, 2),
                                               ),
@@ -504,7 +504,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: Theme.of(context)
                                                 .primaryColor
-                                                .withOpacity(0.1),
+                                                .withValues(alpha: 0.1),
                                             foregroundColor: Theme.of(
                                               context,
                                             ).primaryColor,

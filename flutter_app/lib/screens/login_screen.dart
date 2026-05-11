@@ -56,12 +56,12 @@ class LoginScreen extends StatelessWidget {
                                       shape: BoxShape.circle,
                                       color: const Color(
                                         0xFF00B8FF,
-                                      ).withOpacity(0.15),
+                                      ).withValues(alpha: 0.15),
                                       boxShadow: [
                                         BoxShadow(
                                           color: const Color(
                                             0xFF00B8FF,
-                                          ).withOpacity(0.4),
+                                          ).withValues(alpha: 0.4),
                                           blurRadius: 40,
                                           spreadRadius: 10,
                                         ),
@@ -86,7 +86,7 @@ class LoginScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.3,
+                                      color: Colors.black.withValues(alpha: 0.3,
                                       ),
                                       blurRadius: 10,
                                       offset: const Offset(0, 5),
@@ -286,7 +286,7 @@ class LoginScreen extends StatelessWidget {
                               shadows: [
                                 Shadow(
                                   blurRadius: 10,
-                                  color: Colors.yellow.withOpacity(0.5),
+                                  color: Colors.yellow.withValues(alpha: 0.5),
                                   offset: const Offset(0, 0),
                                 ),
                               ],
@@ -333,7 +333,7 @@ class LoginScreen extends StatelessWidget {
                               elevation: 4,
                               shadowColor: Theme.of(
                                 context,
-                              ).primaryColor.withOpacity(0.3),
+                              ).primaryColor.withValues(alpha: 0.3),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
