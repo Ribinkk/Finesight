@@ -548,7 +548,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                               boxShadow: [
                                 if (isSelected)
                                   BoxShadow(
-                                    color: gradient[0].withValues(alpha: 0.4),
+                                    color: gradient[0].withOpacity(0.4),
                                     blurRadius: 8,
                                     spreadRadius: 2,
                                   ),
@@ -674,7 +674,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 
     // Update the Primary/Cyan gradient dynamically
     final dynamicGradients = List<List<Color>>.from(_availableGradients);
-    dynamicGradients[9] = [primaryColor, primaryColor.withValues(alpha: 0.7)];
+    dynamicGradients[9] = [primaryColor, primaryColor.withOpacity(0.7)];
 
     Color activeColor = isExpense ? Colors.redAccent : primaryColor;
     Color bgColor = widget.isDark
@@ -737,7 +737,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
                           color: !isExpense
-                              ? Colors.green.withValues(alpha: 0.2)
+                              ? Colors.green.withOpacity(0.2)
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
                           border: !isExpense
@@ -764,7 +764,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
                           color: isExpense
-                              ? Colors.redAccent.withValues(alpha: 0.2)
+                              ? Colors.redAccent.withOpacity(0.2)
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
                           border: isExpense
@@ -808,7 +808,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 ),
                 hintText: '0',
                 hintStyle: TextStyle(
-                  color: hintColor.withValues(alpha: 0.5),
+                  color: hintColor.withOpacity(0.5),
                   fontSize: 32,
                 ),
                 border: InputBorder.none,
@@ -992,7 +992,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? color.withValues(alpha: 0.2)
+                            ? color.withOpacity(0.2)
                             : (widget.isDark
                                   ? Colors.white10
                                   : Colors.grey.shade200),
@@ -1060,16 +1060,16 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? mainColor.withValues(alpha: 0.3)
+                              ? mainColor.withOpacity(0.3)
                               : (widget.isDark
-                                    ? Colors.white.withValues(alpha: 0.05)
+                                    ? Colors.white.withOpacity(0.05)
                                     : Colors.grey.shade100),
                           borderRadius: BorderRadius.circular(20),
                           border: isSelected
                               ? Border.all(color: mainColor, width: 1.5)
                               : Border.all(
                                   color: widget.isDark
-                                      ? Colors.white.withValues(alpha: 0.1)
+                                      ? Colors.white.withOpacity(0.1)
                                       : Colors.grey.shade300,
                                   width: 1,
                                 ),
@@ -1104,7 +1104,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: 8,
-                shadowColor: primaryColor.withValues(alpha: 0.4),
+                shadowColor: primaryColor.withOpacity(0.4),
               ),
               child: Text(
                 isExpense ? 'Add Expense' : 'Add Income',

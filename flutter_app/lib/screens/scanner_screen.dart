@@ -268,7 +268,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
                 color: widget.isDark
-                    ? Colors.white.withValues(alpha: 0.05)
+                    ? Colors.white.withOpacity(0.05)
                     : const Color(0xFFE2E8F0),
                 shape: BoxShape.circle,
               ),
@@ -303,7 +303,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               ),
             ),
             const SizedBox(height: 48),
-            FloatingActionButton.extended(
+            FloatingActionButton.extended(heroTag: null,
               onPressed: _scan,
               backgroundColor: Theme.of(context).primaryColor,
               foregroundColor: Colors.white,

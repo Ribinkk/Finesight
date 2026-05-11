@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./database_mongo');
 require('dotenv').config();
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const Groq = require("groq-sdk");
 const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
@@ -22,8 +22,8 @@ const Payment = require('./models/Payment');
 // Connect to Database
 connectDB();
 
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Initialize Groq
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const app = express();
 
@@ -444,15 +444,13 @@ router.get('/analytics', async (req, res) => {
     }
 });
 
-// --- AI Chat (Gemini) ---
+// --- AI Chat (Groq) ---
 router.post('/chat', async (req, res) => {
   const { message, context, user_id } = req.body;
   if (!user_id) return res.status(400).json({ error: "User ID required" });
 
   try {
-    const model = genAI.getGenerativeModel({ 
-        model: "gemini-1.5-pro",
-        systemInstruction: `You are a helpful financial assistant for of Expense Tracker App. 
+    const systemPrompt = `You are a helpful financial assistant for of Expense Tracker App. 
         You help users verify expenses, income, etc., by calling functions.
         
         If the user asks to add an expense, income, subscription, debt, or goal, you MUST return a strict JSON object with a specific structure.
@@ -465,33 +463,28 @@ router.post('/chat', async (req, res) => {
         4. Add Debt: {"action": "add_debt", "type": "Owe/Owed", "person": "...", "amount": 123, "dueDate": "ISO8601"}
         5. Add Goal: {"action": "add_goal", "title": "...", "targetAmount": 123, "currentAmount": 0, "deadline": "ISO8601"}
         
-        If no action is needed, just reply with plain text conversational advice.
-        `
+        If no action is needed, just reply with plain text conversational advice.`;
+
+    const messages = [{ role: 'system', content: systemPrompt }];
+    
+    if (context && Array.isArray(context)) {
+        context.forEach(c => {
+             let role = c.role;
+             if (role === 'model') role = 'assistant';
+             messages.push({ role: role, content: c.content });
+        });
+    }
+    
+    messages.push({ role: 'user', content: message });
+
+    const completion = await groq.chat.completions.create({
+        messages: messages,
+        model: "llama-3.3-70b-versatile",
     });
 
-    const chat = model.startChat({
-        history: context ? context.map(c => {
-            // Gemini history roles must alternate between 'user' and 'model'
-            // 'system' is not a valid role in history when using startChat with systemInstruction
-            let role = c.role;
-            if (role === 'system') role = 'user';
-            if (role === 'assistant') role = 'model';
-            
-            return {
-                role: role,
-                parts: [{ text: c.content }]
-            };
-        }).filter(c => c.role === 'user' || c.role === 'model') : []
-    });
+    const responseText = completion.choices[0]?.message?.content || "";
 
-    // Ensure history alternates and starts/ends correctly if needed
-    // (Simplified for now, but role mapping is the main fix)
-
-
-    const result = await chat.sendMessage(message);
-    const responseText = result.response.text();
-
-    console.log("Gemini Response:", responseText);
+    console.log("Groq Response:", responseText);
 
     // Attempt to parse JSON action
     let actionData = null;
@@ -604,14 +597,12 @@ router.post('/chat', async (req, res) => {
   }
 });
 
-// --- Receipt Scanning (Gemini) ---
+// --- Receipt Scanning (Groq) ---
 router.post('/scan-receipt', async (req, res) => {
   const { imageBase64 } = req.body;
   if (!imageBase64) return res.status(400).json({ error: "Image data required" });
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-
     const prompt = `Inspect this receipt image. Extract:
     - Merchant Name (title)
     - Total Amount (number)
@@ -622,17 +613,26 @@ router.post('/scan-receipt', async (req, res) => {
     Return strict JSON with keys: title, amount, date, category, description. 
     NO CODE BLOCKS. Just the JSON.`;
 
-    const result = await model.generateContent([
-        prompt,
+    const completion = await groq.chat.completions.create({
+      messages: [
         {
-            inlineData: {
-                data: imageBase64,
-                mimeType: "image/jpeg"
-            }
-        }
-    ]);
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:image/jpeg;base64,${imageBase64}`,
+              },
+            },
+          ],
+        },
+      ],
+      model: "llama-3.2-11b-vision-preview",
+      temperature: 0.1,
+    });
     
-    let text = result.response.text().trim();
+    let text = completion.choices[0]?.message?.content?.trim() || "{}";
     // Cleanup markdown if present
     if (text.startsWith('```json')) text = text.replace(/^```json/, '').replace(/```$/, '');
     else if (text.startsWith('```')) text = text.replace(/^```/, '').replace(/```$/, '');

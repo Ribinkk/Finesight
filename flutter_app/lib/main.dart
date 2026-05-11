@@ -17,7 +17,7 @@ void main() async {
     debugPrint('DEBUG: Attempting to initialize Firebase...');
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
-    ).timeout(const Duration(seconds: 5));
+    ).timeout(const Duration(seconds: 3));
 
     debugPrint('DEBUG: Firebase initialized successfully');
   } catch (e) {
@@ -37,6 +37,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+
+    // Derive a slightly darker primary for dark mode
+    final darkPrimary = HSLColor.fromColor(themeProvider.primaryColor)
+        .withLightness(
+          (HSLColor.fromColor(themeProvider.primaryColor).lightness - 0.15)
+              .clamp(0.0, 1.0),
+        )
+        .toColor();
 
     return MaterialApp(
       title: 'Finesight AI',
@@ -69,41 +77,71 @@ class MyApp extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           ),
         ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: themeProvider.primaryColor,
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: themeProvider.primaryColor,
+            side: BorderSide(color: themeProvider.primaryColor),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ),
         textTheme: GoogleFonts.interTextTheme(),
+        iconTheme: const IconThemeData(color: Colors.black87),
+        listTileTheme: const ListTileThemeData(
+          iconColor: Colors.black87,
+          textColor: Colors.black87,
+        ),
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: themeProvider.primaryColor,
-          primary: themeProvider.primaryColor,
-          surface: const Color(0xFF1E293B), // Lighter surface (Slate 800)
+          seedColor: darkPrimary,
+          primary: darkPrimary,
+          surface: const Color(0xFF1E293B),
           brightness: Brightness.dark,
         ),
-        scaffoldBackgroundColor: const Color(
-          0xFF020617,
-        ), // Keep background deep
+        scaffoldBackgroundColor: const Color(0xFF020617),
+        iconTheme: const IconThemeData(color: Colors.white),
+        listTileTheme: const ListTileThemeData(
+          iconColor: Colors.white,
+          textColor: Colors.white,
+        ),
         cardTheme: CardThemeData(
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(
-              color: Color(0xFF334155),
-              width: 1,
-            ), // Slate 700 border
+            side: const BorderSide(color: Color(0xFF334155), width: 1),
           ),
-          color: const Color(0xFF1E293B), // Slate 800
+          color: const Color(0xFF1E293B),
           margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: themeProvider.primaryColor,
-            foregroundColor:
-                Colors.black, // Dark text on bright primary often reads better
+            backgroundColor: darkPrimary,
+            foregroundColor: Colors.white,
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(foregroundColor: darkPrimary),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: darkPrimary,
+            side: BorderSide(color: darkPrimary),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
         ),
         textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),

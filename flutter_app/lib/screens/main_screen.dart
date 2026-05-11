@@ -60,29 +60,20 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _initCurrencyAndLoadData() async {
-    await CurrencyHelper.init(); // Load saved currency
+    // Run currency init and data load in parallel for faster startup
+    final currencyFuture = CurrencyHelper.init();
+    final dataFuture = _loadData();
 
-    // Check if currency is set (we can check if it's default 'INR' and maybe ask?
-    // Or just always ask once if we had a flag.
-    // For now, let's checking SharedPreferences directly to see if it was ever set.
-    // But CurrencyHelper.init() already hides that logic.
-    // Let's modify init to return if it was loaded or default.
-    // Or just check here:
-
-    // Actually, asking the user "after account creation" implies we should ask
-    // if it's their first time. Since I can't easily detect "first time after signup"
-    // without more complex state or passing flags, I will just check if
-    // SharedPreferences has the key 'currency'. If not, show dialog.
+    await currencyFuture; // Wait for currency to check if dialog needed
 
     final prefs = await SharedPreferences.getInstance();
     final hasSetCurrency = prefs.containsKey('currency');
 
     if (!hasSetCurrency && mounted) {
-      // Short delay to let build finish or just show after
       Future.delayed(Duration.zero, () => _showCurrencyDialog());
     }
 
-    _loadData();
+    await dataFuture; // Ensure data is also complete
   }
 
   void _showCurrencyDialog() {
@@ -278,7 +269,7 @@ class _MainScreenState extends State<MainScreen> {
                 context,
                 title: 'Transfer',
                 icon: LucideIcons.arrowRightLeft,
-                color: const Color(0xFF3B82F6),
+                color: themeProvider.primaryColor,
                 onTap: () => _navigateToAddWithType('Transfer'),
               ),
               _buildMenuButton(
@@ -314,9 +305,9 @@ class _MainScreenState extends State<MainScreen> {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: color.withOpacity(0.1),
               shape: BoxShape.circle,
-              border: Border.all(color: color.withValues(alpha: 0.5), width: 2),
+              border: Border.all(color: color.withOpacity(0.5), width: 2),
             ),
             child: Icon(icon, color: color, size: 28),
           ),
@@ -441,8 +432,8 @@ class _MainScreenState extends State<MainScreen> {
             gradient: isDark
                 ? LinearGradient(
                     colors: [
-                      themeProvider.primaryColor.withValues(alpha: 0.8),
-                      themeProvider.primaryColor.withValues(alpha: 0.6),
+                      themeProvider.primaryColor.withOpacity(0.8),
+                      themeProvider.primaryColor.withOpacity(0.6),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -450,7 +441,7 @@ class _MainScreenState extends State<MainScreen> {
                 : LinearGradient(
                     colors: [
                       themeProvider.primaryColor,
-                      themeProvider.primaryColor.withValues(alpha: 0.8),
+                      themeProvider.primaryColor.withOpacity(0.8),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -476,7 +467,7 @@ class _MainScreenState extends State<MainScreen> {
           AIBotWidget(user: widget.user, isDark: isDark),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton(heroTag: null,
         onPressed: _showAddMenu,
         backgroundColor: themeProvider.primaryColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
@@ -548,7 +539,7 @@ class _MainScreenState extends State<MainScreen> {
             gradient: LinearGradient(
               colors: [
                 themeProvider.primaryColor,
-                themeProvider.primaryColor.withValues(alpha: 0.8),
+                themeProvider.primaryColor.withOpacity(0.8),
               ],
             ),
           ),

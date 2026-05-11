@@ -161,8 +161,7 @@ class SettingsScreen extends StatelessWidget {
             itemCount: colors.length,
             itemBuilder: (context, index) {
               final color = colors[index];
-              final isSelected =
-                  themeProvider.primaryColor.toARGB32() == color.toARGB32();
+              final isSelected = themeProvider.primaryColor.value == color.value;
 
               return GestureDetector(
                 onTap: () => themeProvider.setPrimaryColor(color),
@@ -181,7 +180,7 @@ class SettingsScreen extends StatelessWidget {
                         : null,
                     boxShadow: [
                       BoxShadow(
-                        color: color.withValues(alpha: 0.4),
+                        color: color.withOpacity(0.4),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),

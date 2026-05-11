@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:intl/intl.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -60,7 +61,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
           bottom: TabBar(
             labelColor: widget.isDark ? Colors.white : Colors.black,
             unselectedLabelColor: Colors.grey,
-            indicatorColor: const Color(0xFF3B82F6),
+            indicatorColor: Theme.of(context).primaryColor,
             tabs: const [
               Tab(text: 'Wallet'),
               Tab(text: 'Bills'),
@@ -121,14 +122,47 @@ class _WalletViewState extends State<WalletView> {
     {'bank': 'HDFC Bank', 'last4': '1234', 'holder': 'John Doe'},
   ];
 
+  late Razorpay _razorpay;
+  Expense? _pendingExpense;
+
   @override
   void initState() {
     super.initState();
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
   }
 
   @override
   void dispose() {
+    _razorpay.clear();
     super.dispose();
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) {
+    if (_pendingExpense != null) {
+      widget.onAddExpense(_pendingExpense!);
+      _pendingExpense = null;
+    }
+    _showSuccessAnimation();
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Payment Failed: ${response.message ?? "Unknown error"}'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('External Wallet Selected: ${response.walletName}'),
+      ),
+    );
   }
 
   void _showAddCardDialog({int? editIndex, Map<String, dynamic>? card}) {
@@ -305,9 +339,7 @@ class _WalletViewState extends State<WalletView> {
   }
 
   void _showUPIPaymentDialog(String merchantData) {
-    final amountController = TextEditingController(
-      text: '100',
-    ); // Default amount of 100
+    final amountController = TextEditingController();
     bool isProcessing = false;
 
     showModalBottomSheet(
@@ -333,7 +365,7 @@ class _WalletViewState extends State<WalletView> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.3),
+                      color: Colors.grey.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -343,7 +375,7 @@ class _WalletViewState extends State<WalletView> {
                   children: [
                     CircleAvatar(
                       radius: 25,
-                      backgroundColor: Colors.blue.withValues(alpha: 0.1),
+                      backgroundColor: Colors.blue.withOpacity(0.1),
                       child: const Icon(LucideIcons.user, color: Colors.blue),
                     ),
                     const SizedBox(width: 16),
@@ -357,9 +389,12 @@ class _WalletViewState extends State<WalletView> {
                           ),
                           Text(
                             merchantData.split('?').first, // Clean up URL/URI
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
+                              color: widget.isDark
+                                  ? Colors.white
+                                  : Colors.black87,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -381,9 +416,10 @@ class _WalletViewState extends State<WalletView> {
                   controller: amountController,
                   keyboardType: TextInputType.number,
                   autofocus: true,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
+                    color: widget.isDark ? Colors.white : Colors.black87,
                   ),
                   decoration: InputDecoration(
                     prefixText: '₹ ',
@@ -413,25 +449,38 @@ class _WalletViewState extends State<WalletView> {
                         setModalState(() => isProcessing = true);
                         setBtnState(() {});
 
-                        // Simulate UPI network delay
-                        await Future.delayed(const Duration(seconds: 2));
-
-                        widget.onAddExpense(
-                          Expense(
-                            id: DateTime.now().toString(),
-                            title:
-                                'QR Payment: ${merchantData.split('?').first}',
-                            amount: amount,
-                            category: 'Other',
-                            date: DateTime.now(),
-                            paymentMethod: 'UPI',
-                            description: 'UPI Payment via QR',
-                          ),
+                        _pendingExpense = Expense(
+                          id: DateTime.now().toString(),
+                          title: 'QR Payment: ${merchantData.split('?').first}',
+                          amount: amount,
+                          category: 'Other',
+                          date: DateTime.now(),
+                          paymentMethod: 'Razorpay',
+                          description: 'Razorpay Scan and Pay',
                         );
 
                         if (context.mounted) {
                           Navigator.pop(context); // Close bottom sheet
-                          _showSuccessAnimation();
+                        }
+
+                        final name = merchantData.split('?').first;
+                        
+                        var options = {
+                          'key': 'rzp_test_SnsuUUhqbt1cth',
+                          'amount': (amount * 100).toInt(),
+                          'currency': 'INR',
+                          'name': name.isEmpty ? 'Test Merchant' : name,
+                          'description': 'Payment',
+                          'prefill': {
+                            'contact': '9876543210',
+                            'email': 'user@example.com'
+                          }
+                        };
+
+                        try {
+                          _razorpay.open(options);
+                        } catch (e) {
+                          debugPrint('Error launching Razorpay: $e');
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -548,7 +597,7 @@ class _WalletViewState extends State<WalletView> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.extended(heroTag: null,
         onPressed: _scanQR,
         backgroundColor: Theme.of(context).primaryColor,
         icon: const Icon(LucideIcons.qrCode, color: Colors.white),
@@ -575,8 +624,8 @@ class _WalletViewState extends State<WalletView> {
             return Card(
               elevation: 1,
               color: widget.isDark
-                  ? Theme.of(context).primaryColor.withValues(alpha: 0.2)
-                  : Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                  ? Theme.of(context).primaryColor.withOpacity(0.2)
+                  : Theme.of(context).primaryColor.withOpacity(0.1),
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
                 leading: Icon(
@@ -640,9 +689,9 @@ class _WalletViewState extends State<WalletView> {
             label: const Text('Add Debit / Credit Card'),
             style: ElevatedButton.styleFrom(
               backgroundColor: widget.isDark ? Colors.grey[800] : Colors.white,
-              foregroundColor: Colors.blue,
+              foregroundColor: Theme.of(context).primaryColor,
               elevation: 0,
-              side: const BorderSide(color: Colors.blue),
+              side: BorderSide(color: Theme.of(context).primaryColor),
             ),
           ),
           const SizedBox(height: 16),
@@ -750,11 +799,11 @@ class _WalletViewState extends State<WalletView> {
                 leading: CircleAvatar(
                   backgroundColor: item['status'] == 'success'
                       ? (item['isExpense'] == true
-                            ? Colors.orange.withValues(alpha: 0.1)
+                            ? Colors.orange.withOpacity(0.1)
                             : Theme.of(
                                 context,
-                              ).primaryColor.withValues(alpha: 0.1))
-                      : Colors.red.withValues(alpha: 0.1),
+                              ).primaryColor.withOpacity(0.1))
+                      : Colors.red.withOpacity(0.1),
                   child: Icon(
                     item['status'] == 'success'
                         ? (item['isExpense'] == true

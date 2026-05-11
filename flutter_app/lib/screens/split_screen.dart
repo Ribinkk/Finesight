@@ -305,7 +305,7 @@ class _SplitScreenState extends State<SplitScreen> {
         foregroundColor: widget.isDark ? Colors.white : Colors.black,
         elevation: 0,
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.extended(heroTag: null,
         onPressed: _addSplit,
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
@@ -396,8 +396,8 @@ class _SplitScreenState extends State<SplitScreen> {
                           color: youPaid
                               ? Theme.of(
                                   context,
-                                ).primaryColor.withValues(alpha: 0.1)
-                              : Colors.orange.withValues(alpha: 0.1),
+                                ).primaryColor.withOpacity(0.1)
+                              : Colors.orange.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(

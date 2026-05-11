@@ -188,8 +188,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
                                     color: Colors.white,
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: service.color.withValues(
-                                        alpha: 0.2,
+                                      color: service.color.withOpacity(0.2,
                                       ),
                                       width: 1,
                                     ),
@@ -533,7 +532,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
         foregroundColor: widget.isDark ? Colors.white : Colors.black,
         elevation: 0,
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.extended(heroTag: null,
         onPressed: () => _showAddEditDialog(),
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
@@ -553,7 +552,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
                       gradient: LinearGradient(
                         colors: [
                           Theme.of(context).primaryColor,
-                          Theme.of(context).primaryColor.withValues(alpha: 0.8),
+                          Theme.of(context).primaryColor.withOpacity(0.8),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -563,7 +562,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
                         BoxShadow(
                           color: Theme.of(
                             context,
-                          ).primaryColor.withValues(alpha: 0.3),
+                          ).primaryColor.withOpacity(0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 8),
                         ),
@@ -574,7 +573,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
                         Text(
                           'Total Monthly Cost',
                           style: GoogleFonts.inter(
-                            color: Colors.white.withValues(alpha: 0.9),
+                            color: Colors.white.withOpacity(0.9),
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
@@ -609,7 +608,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
+                                color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
@@ -725,7 +724,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
                                       border: Border.all(
                                         color: SubscriptionData.getColor(
                                           item.title,
-                                        ).withValues(alpha: 0.2),
+                                        ).withOpacity(0.2),
                                       ),
                                     ),
                                     child: Builder(
@@ -830,11 +829,9 @@ class _RecurringScreenState extends State<RecurringScreen> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: daysLeft <= 3
-                                              ? Colors.red.withValues(
-                                                  alpha: 0.1,
+                                              ? Colors.red.withOpacity(0.1,
                                                 )
-                                              : Colors.blue.withValues(
-                                                  alpha: 0.1,
+                                              : Colors.blue.withOpacity(0.1,
                                                 ),
                                           borderRadius: BorderRadius.circular(
                                             8,

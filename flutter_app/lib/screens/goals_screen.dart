@@ -181,7 +181,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                     targetAmount: amount,
                     currentAmount: 0,
                     deadline: selectedDate,
-                    color: selectedColor.toARGB32(),
+                    color: selectedColor.value,
                   );
 
                   try {
@@ -315,7 +315,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
         foregroundColor: widget.isDark ? Colors.white : Colors.black,
         elevation: 0,
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.extended(heroTag: null,
         onPressed: _addGoal,
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
@@ -445,7 +445,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                                               Color(goal.color),
                                               Color(
                                                 goal.color,
-                                              ).withValues(alpha: 0.7),
+                                              ).withOpacity(0.7),
                                             ],
                                           ),
                                           borderRadius: BorderRadius.circular(
@@ -456,7 +456,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                                               BoxShadow(
                                                 color: Color(
                                                   goal.color,
-                                                ).withValues(alpha: 0.3),
+                                                ).withOpacity(0.3),
                                                 blurRadius: 4,
                                                 offset: const Offset(0, 2),
                                               ),
@@ -504,7 +504,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: Theme.of(context)
                                                 .primaryColor
-                                                .withValues(alpha: 0.1),
+                                                .withOpacity(0.1),
                                             foregroundColor: Theme.of(
                                               context,
                                             ).primaryColor,
