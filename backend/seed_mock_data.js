@@ -1,6 +1,6 @@
 const http = require('http');
 const BASE = 'http://localhost:3001/api';
-const USER_ID = 'BoEUcgxvsTabHKgsi7mPzB2qFgR2';
+const USER_ID = 'wRSGWqInjKOmqYEWk4Y5Kuf6NBo2';
 
 function post(path, data) {
   return new Promise((resolve, reject) => {
