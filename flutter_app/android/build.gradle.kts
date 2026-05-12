@@ -19,7 +19,7 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 subprojects {
-    afterEvaluate {
+    val injectNamespace = Action<Project> {
         if (project.hasProperty("android")) {
             val androidExt = project.extensions.findByName("android")
             if (androidExt is com.android.build.gradle.LibraryExtension) {
@@ -28,6 +28,11 @@ subprojects {
                 }
             }
         }
+    }
+    if (project.state.executed) {
+        injectNamespace.execute(this)
+    } else {
+        project.afterEvaluate(injectNamespace)
     }
 }
 
